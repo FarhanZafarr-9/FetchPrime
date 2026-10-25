@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -594,15 +595,17 @@ private fun MasterListPane(
                                 state = listState,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 64.dp),
-                                verticalArrangement = Arrangement.spacedBy(MorpheDefaults.ItemSpacing)
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
-                                items(
+                                itemsIndexed(
                                     items = filteredApps,
-                                    key = { it.packageName },
-                                    contentType = { "app_row" }
-                                ) { app ->
+                                    key = { _, app -> app.packageName },
+                                    contentType = { _, _ -> "app_row" }
+                                ) { index, app ->
+                                    val position = connectedPosition(index, filteredApps.size)
                                     AppBrowserRow(
                                         app = app,
+                                        position = position,
                                         favourite = app.packageName in favourites,
                                         installed = isPackageOrPatchedInstalled(app.packageName, installedPackages),
                                         selected = (isExpanded && selected?.packageName == app.packageName),
