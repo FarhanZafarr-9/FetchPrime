@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -37,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -445,19 +447,7 @@ internal fun buildPrimaryAction(
             run = {}
         )
         is ResolveState.Done -> {
-            if (state.candidates.isNotEmpty()) {
-                // When candidates are already resolved, each card has its own dedicated
-                // download button tailored to its specific architecture/variant.
-                // Suppress redundant bottom download button to prevent duplicate actions
-                // and avoid blindly picking the wrong architecture variant.
-                null
-            } else {
-                PrimaryAction(
-                    label = "Search ${group.source.label}",
-                    icon = Icons.Outlined.Search,
-                    run = { onResolve(group.source, targetOption) }
-                )
-            }
+            null
         }
         else -> PrimaryAction(
             label = "Search ${group.source.label}",
@@ -496,6 +486,16 @@ internal fun SourcePageContent(
 
         val manual = group.manual.firstOrNull()
         val onOpenSite: (() -> Unit)? = if (manual != null) { { onSolveCaptcha(manual) } } else null
+
+        // Auto-check version history when no APKs are found for this source
+        LaunchedEffect(candidateState, group.source) {
+            if (candidateState is ResolveState.Done && candidateState.candidates.isEmpty() && group.source.supportsHistory) {
+                showHistory = true
+                if (group.history is VersionHistoryState.Idle) {
+                    onVersionHistory(group.source)
+                }
+            }
+        }
         val onToggleVersions: (() -> Unit)? = if (group.source.supportsHistory) {
             {
                 showHistory = !showHistory
@@ -543,6 +543,7 @@ internal fun SourceBottomBar(
     onRefresh: () -> Unit,
     onCancel: () -> Unit
 ) {
+    val bottomBarButtonHeight = 44.dp
     Column {
         MorpheDivider(fullWidth = true)
         Row(
@@ -556,12 +557,16 @@ internal fun SourceBottomBar(
             HelperIconButton(
                 icon = Icons.Outlined.Refresh,
                 contentDescription = "Refresh",
-                onClick = onRefresh
+                onClick = onRefresh,
+                size = bottomBarButtonHeight,
+                shape = CircleShape
             )
             HelperIconButton(
                 icon = Icons.Outlined.Close,
                 contentDescription = "Cancel",
-                onClick = onCancel
+                onClick = onCancel,
+                size = bottomBarButtonHeight,
+                shape = CircleShape
             )
             val primaryInteractionSource = remember { MutableInteractionSource() }
             Button(
@@ -569,7 +574,7 @@ internal fun SourceBottomBar(
                 enabled = action.enabled,
                 modifier = Modifier
                     .weight(1f)
-                    .height(MorpheDefaults.DialogButtonHeight)
+                    .height(bottomBarButtonHeight)
                     .pressScale(primaryInteractionSource, enabled = action.enabled),
                 interactionSource = primaryInteractionSource,
                 shape = RoundedCornerShape(50),
@@ -623,7 +628,7 @@ internal fun VersionHistorySection(
         ) {
             SourceAvatar(source = source, size = 18.dp)
             Text(
-                text = "${source.label} Versions",
+                text = "Versions",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -910,6 +915,8 @@ internal fun CandidateResolveSection(
 
         is ResolveState.Done -> {
             if (state.candidates.isEmpty()) {
+                val hasVersions = group.source.supportsHistory &&
+                    !(group.history is VersionHistoryState.Done && group.history.candidates.isEmpty())
                 SurfaceCard(
                     cornerRadius = 14.dp,
                     modifier = Modifier.fillMaxWidth()
@@ -917,73 +924,104 @@ internal fun CandidateResolveSection(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
                             text = emptyText,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        if (onToggleVersions != null || onOpenSite != null) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                if (onToggleVersions != null) {
-                                    Surface(
-                                        shape = RoundedCornerShape(50),
-                                        color = if (isVersionsOpen) {
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
-                                        } else {
-                                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-                                        },
-                                        contentColor = if (isVersionsOpen) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                        },
-                                        onClick = onToggleVersions
+                        if (hasVersions || onOpenSite != null) {
+                            if (!hasVersions && onOpenSite != null) {
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(40.dp),
+                                    shape = RoundedCornerShape(50),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                    onClick = onOpenSite
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxSize(),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Icon(
-                                                imageVector = if (isVersionsOpen) Icons.Outlined.ExpandLess else Icons.Outlined.History,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(15.dp)
-                                            )
-                                            Text(
-                                                text = if (isVersionsOpen) "Hide versions" else "Versions",
-                                                style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                        }
+                                        Icon(
+                                            imageVector = Icons.Outlined.OpenInBrowser,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(Modifier.width(6.dp))
+                                        Text(
+                                            text = "Open site",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
                                 }
-                                if (onOpenSite != null) {
-                                    Surface(
-                                        shape = RoundedCornerShape(50),
-                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        onClick = onOpenSite
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                            verticalAlignment = Alignment.CenterVertically
+                            } else {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (hasVersions && onToggleVersions != null) {
+                                        Surface(
+                                            shape = RoundedCornerShape(50),
+                                            color = if (isVersionsOpen) {
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                                            } else {
+                                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                                            },
+                                            contentColor = if (isVersionsOpen) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                            },
+                                            onClick = onToggleVersions
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.OpenInBrowser,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(15.dp)
-                                            )
-                                            Text(
-                                                text = "Open site",
-                                                style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = FontWeight.Medium
-                                            )
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = if (isVersionsOpen) Icons.Outlined.ExpandLess else Icons.Outlined.History,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(15.dp)
+                                                )
+                                                Text(
+                                                    text = if (isVersionsOpen) "Hide versions" else "Versions",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            }
+                                        }
+                                    }
+                                    if (onOpenSite != null) {
+                                        Surface(
+                                            shape = RoundedCornerShape(50),
+                                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            onClick = onOpenSite
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.OpenInBrowser,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(15.dp)
+                                                )
+                                                Text(
+                                                    text = "Open site",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            }
                                         }
                                     }
                                 }
