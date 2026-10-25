@@ -762,20 +762,29 @@ internal fun AppDetailView(
             item {
                 MorpheSectionTitle(text = "Sources (${sortedSources.size})", icon = Icons.Outlined.Extension)
             }
-            items(sortedSources, key = { it.repo }) { source ->
-                val autoExpand = remember(source.repo, searchQuery) {
-                    if (searchQuery.isNotBlank()) {
-                        val q = searchQuery.trim().lowercase(Locale.US)
-                        source.repo.lowercase(Locale.US).contains(q) ||
-                            source.patches.any { it.name.lowercase(Locale.US).contains(q) }
-                    } else false
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    sortedSources.forEachIndexed { index, source ->
+                        val autoExpand = remember(source.repo, searchQuery) {
+                            if (searchQuery.isNotBlank()) {
+                                val q = searchQuery.trim().lowercase(Locale.US)
+                                source.repo.lowercase(Locale.US).contains(q) ||
+                                    source.patches.any { it.name.lowercase(Locale.US).contains(q) }
+                            } else false
+                        }
+                        val position = connectedPosition(index, sortedSources.size)
+                        AppSourceCard(
+                            source = source,
+                            position = position,
+                            initiallyExpanded = autoExpand,
+                            onOpenUrl = openUrl,
+                            onAddToMorphe = { openAddSource(context, it) }
+                        )
+                    }
                 }
-                AppSourceCard(
-                    source = source,
-                    initiallyExpanded = autoExpand,
-                    onOpenUrl = openUrl,
-                    onAddToMorphe = { openAddSource(context, it) }
-                )
             }
         }
     }
@@ -784,15 +793,16 @@ internal fun AppDetailView(
 @Composable
 internal fun AppSourceCard(
     source: ArchiveSource,
+    position: ConnectedPosition = ConnectedPosition.Single,
     initiallyExpanded: Boolean = false,
     onOpenUrl: (String) -> Unit,
     onAddToMorphe: (String) -> Unit
 ) {
     var expanded by remember(source.repo, initiallyExpanded) { mutableStateOf(initiallyExpanded) }
     val colors = MaterialTheme.colorScheme
-    SettingsItemCard(
-        onClick = null,
-        borderWidth = 0.dp
+    val shape = connectedCardShape(position)
+    SurfaceCard(
+        shape = shape
     ) {
         Column(
             modifier = Modifier.padding(vertical = 10.dp),
