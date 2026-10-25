@@ -10,13 +10,25 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import app.morphe.fetch.updater.UpdateInfo
 import app.morphe.fetch.updater.UpdateState
 import java.io.File
@@ -80,6 +92,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.Dispatchers
@@ -609,6 +622,233 @@ internal fun LoadingState() {
     }
 }
 
+private fun parseMarkdownInline(
+    text: String,
+    primaryColor: Color,
+    codeBgColor: Color
+): AnnotatedString {
+    val pattern = Regex("""(\*\*(.+?)\*\*)|(`{1,3}(.+?)`{1,3})|(\[(.+?)\]\((.+?)\))|(https?://[^\s)]+)""")
+    return buildAnnotatedString {
+        var lastIndex = 0
+        for (match in pattern.findAll(text)) {
+            val range = match.range
+            if (range.first > lastIndex) {
+                append(text.substring(lastIndex, range.first))
+            }
+
+            when {
+                // **bold** -> group 2
+                match.groups[2] != null -> {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(match.groups[2]!!.value)
+                    }
+                }
+                // `code` or ```code``` -> group 4
+                match.groups[4] != null -> {
+                    withStyle(
+                        SpanStyle(
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Medium,
+                            background = codeBgColor
+                        )
+                    ) {
+                        append(" ${match.groups[4]!!.value.trim()} ")
+                    }
+                }
+                // [label](url) -> group 6 is label, group 7 is url
+                match.groups[6] != null -> {
+                    withStyle(
+                        SpanStyle(
+                            color = primaryColor,
+                            fontWeight = FontWeight.SemiBold,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    ) {
+                        append(match.groups[6]!!.value)
+                    }
+                }
+                // raw URL -> group 8
+                match.groups[8] != null -> {
+                    withStyle(
+                        SpanStyle(
+                            color = primaryColor,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    ) {
+                        append(match.groups[8]!!.value)
+                    }
+                }
+                else -> {
+                    append(match.value)
+                }
+            }
+            lastIndex = range.last + 1
+        }
+        if (lastIndex < text.length) {
+            append(text.substring(lastIndex))
+        }
+    }
+}
+
+private sealed interface MarkdownBlock {
+    data class Header(val level: Int, val text: String) : MarkdownBlock
+    data class Bullet(val text: String) : MarkdownBlock
+    data class CodeBlock(val code: String, val language: String = "") : MarkdownBlock
+    data class Paragraph(val text: String) : MarkdownBlock
+    data object EmptyLine : MarkdownBlock
+}
+
+private fun parseMarkdownBlocks(markdown: String): List<MarkdownBlock> {
+    val blocks = mutableListOf<MarkdownBlock>()
+    val lines = markdown.lines()
+    var i = 0
+    while (i < lines.size) {
+        val line = lines[i]
+        val trimmed = line.trim()
+
+        if (trimmed.startsWith("```")) {
+            val language = trimmed.removePrefix("```").trim()
+            val codeLines = mutableListOf<String>()
+            i++
+            while (i < lines.size && !lines[i].trim().startsWith("```")) {
+                codeLines.add(lines[i])
+                i++
+            }
+            if (i < lines.size) {
+                i++ // consume closing ```
+            }
+            blocks.add(MarkdownBlock.CodeBlock(codeLines.joinToString("\n"), language))
+            continue
+        }
+
+        if (trimmed.isEmpty()) {
+            blocks.add(MarkdownBlock.EmptyLine)
+            i++
+            continue
+        }
+
+        when {
+            trimmed.startsWith("### ") -> {
+                blocks.add(MarkdownBlock.Header(3, trimmed.removePrefix("### ").trim()))
+            }
+            trimmed.startsWith("## ") -> {
+                blocks.add(MarkdownBlock.Header(2, trimmed.removePrefix("## ").trim()))
+            }
+            trimmed.startsWith("# ") -> {
+                blocks.add(MarkdownBlock.Header(1, trimmed.removePrefix("# ").trim()))
+            }
+            trimmed.startsWith("* ") || trimmed.startsWith("- ") || trimmed.startsWith("• ") -> {
+                val content = when {
+                    trimmed.startsWith("* ") -> trimmed.removePrefix("* ")
+                    trimmed.startsWith("- ") -> trimmed.removePrefix("- ")
+                    else -> trimmed.removePrefix("• ")
+                }.trim()
+                blocks.add(MarkdownBlock.Bullet(content))
+            }
+            else -> {
+                blocks.add(MarkdownBlock.Paragraph(trimmed))
+            }
+        }
+        i++
+    }
+    return blocks
+}
+
+@Composable
+internal fun MarkdownChangelog(
+    markdown: String,
+    modifier: Modifier = Modifier
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val codeBgColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    val blocks = remember(markdown) { parseMarkdownBlocks(markdown) }
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        for (block in blocks) {
+            when (block) {
+                is MarkdownBlock.Header -> {
+                    val (style, paddingTop) = when (block.level) {
+                        1 -> MaterialTheme.typography.titleMedium to 6.dp
+                        2 -> MaterialTheme.typography.titleSmall to 6.dp
+                        else -> MaterialTheme.typography.titleSmall to 4.dp
+                    }
+                    Text(
+                        text = block.text,
+                        style = style,
+                        fontWeight = FontWeight.Bold,
+                        color = primaryColor,
+                        modifier = Modifier.padding(top = paddingTop, bottom = 2.dp)
+                    )
+                }
+                is MarkdownBlock.Bullet -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = "•",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = primaryColor
+                        )
+                        Text(
+                            text = parseMarkdownInline(block.text, primaryColor, codeBgColor),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = onSurfaceColor
+                        )
+                    }
+                }
+                is MarkdownBlock.CodeBlock -> {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(horizontal = 10.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = block.code,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 11.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+                is MarkdownBlock.Paragraph -> {
+                    Text(
+                        text = parseMarkdownInline(block.text, primaryColor, codeBgColor),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (block.text.startsWith("**Full Changelog**", ignoreCase = true)) {
+                            onSurfaceVariantColor
+                        } else {
+                            onSurfaceColor
+                        }
+                    )
+                }
+                MarkdownBlock.EmptyLine -> {
+                    Spacer(modifier = Modifier.height(2.dp))
+                }
+            }
+        }
+    }
+}
+
 @Composable
 internal fun AppUpdateDialog(
     updateState: UpdateState,
@@ -623,28 +863,60 @@ internal fun AppUpdateDialog(
                 "%.1f MB".format(Locale.US, info.apkSize / (1024f * 1024f))
             } else ""
 
-            AlertDialog(
+            Dialog(
                 onDismissRequest = onDismiss,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Download,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
-                    )
-                },
-                title = {
-                    Text(
-                        text = "Update Available",
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                },
-                text = {
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(0.94f)
+                        .widthIn(max = 580.dp),
+                    shape = RoundedCornerShape(MorpheDefaults.SectionCornerRadius),
+                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+                    tonalElevation = 2.dp
+                ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        // Header: Icon + Title + Close Button
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Download,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Text(
+                                    text = "Update Available",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Close,
+                                    contentDescription = "Close",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        // Version & Size Row
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -657,11 +929,18 @@ internal fun AppUpdateDialog(
                                 color = MaterialTheme.colorScheme.primary
                             )
                             if (sizeMb.isNotEmpty()) {
-                                Text(
-                                    text = sizeMb,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Surface(
+                                    shape = RoundedCornerShape(50),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                ) {
+                                    Text(
+                                        text = sizeMb,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
                             }
                         }
 
@@ -671,147 +950,355 @@ internal fun AppUpdateDialog(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
+                        // Changelog Container (Intact size, scrollable, markdown formatted, no border)
                         if (!info.changelog.isNullOrBlank()) {
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(max = 180.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
+                                        .fillMaxWidth()
                                         .verticalScroll(rememberScrollState())
-                                        .padding(10.dp)
+                                        .padding(12.dp)
+                                ) {
+                                    MarkdownChangelog(
+                                        markdown = info.changelog.trim(),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
+
+                        // Action Buttons: Pill shapes, borderless, full width
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(42.dp),
+                                shape = RoundedCornerShape(50),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                onClick = onDismiss
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = info.changelog.trim(),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        text = "Later",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(42.dp),
+                                shape = RoundedCornerShape(50),
+                                color = MaterialTheme.colorScheme.primary,
+                                onClick = { onDownloadUpdate(info) }
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Download,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = "Update Now",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimary
                                     )
                                 }
                             }
                         }
                     }
-                },
-                confirmButton = {
-                    HelperButton(
-                        text = "Update Now",
-                        onClick = { onDownloadUpdate(info) },
-                        icon = Icons.Outlined.Download
-                    )
-                },
-                dismissButton = {
-                    HelperOutlinedButton(
-                        text = "Later",
-                        onClick = onDismiss
-                    )
                 }
-            )
+            }
         }
         is UpdateState.Downloading -> {
             val progress = updateState.progress
             val copiedMb = "%.1f".format(Locale.US, updateState.downloadedBytes / (1024f * 1024f))
             val totalMb = "%.1f".format(Locale.US, updateState.totalBytes / (1024f * 1024f))
-            AlertDialog(
+
+            Dialog(
                 onDismissRequest = { /* Keep active during download */ },
-                title = {
-                    Text(
-                        text = "Downloading Update...",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
+                properties = DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false
+                )
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(0.94f)
+                        .widthIn(max = 580.dp),
+                    shape = RoundedCornerShape(MorpheDefaults.SectionCornerRadius),
+                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+                    tonalElevation = 2.dp
+                ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Download,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "Downloading Update...",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
                         Text(
                             text = "${updateState.info.tagName} • $copiedMb of $totalMb MB (${(progress * 100).toInt()}%)",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
+
                         androidx.compose.material3.LinearProgressIndicator(
                             progress = { progress },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp))
+                                .clip(RoundedCornerShape(4.dp)),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     }
-                },
-                confirmButton = {}
-            )
+                }
+            }
         }
         is UpdateState.ReadyToInstall -> {
-            AlertDialog(
+            Dialog(
                 onDismissRequest = onDismiss,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Outlined.CheckCircle,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
-                    )
-                },
-                title = {
-                    Text(
-                        text = "Update Ready",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
-                    Text(
-                        text = "${updateState.info.tagName} has been downloaded and is ready to install.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                },
-                confirmButton = {
-                    HelperButton(
-                        text = "Install Now",
-                        onClick = { onInstallUpdate(updateState.apkFile) },
-                        icon = Icons.Outlined.Download
-                    )
-                },
-                dismissButton = {
-                    HelperOutlinedButton(
-                        text = "Later",
-                        onClick = onDismiss
-                    )
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(0.94f)
+                        .widthIn(max = 580.dp),
+                    shape = RoundedCornerShape(MorpheDefaults.SectionCornerRadius),
+                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+                    tonalElevation = 2.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Text(
+                                    text = "Update Ready",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Close,
+                                    contentDescription = "Close",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "${updateState.info.tagName} has been downloaded and is ready to install.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(42.dp),
+                                shape = RoundedCornerShape(50),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                onClick = onDismiss
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Later",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(42.dp),
+                                shape = RoundedCornerShape(50),
+                                color = MaterialTheme.colorScheme.primary,
+                                onClick = { onInstallUpdate(updateState.apkFile) }
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Download,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = "Install Now",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
-            )
+            }
         }
         is UpdateState.Error -> {
-            AlertDialog(
+            Dialog(
                 onDismissRequest = onDismiss,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Warning,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(32.dp)
-                    )
-                },
-                title = {
-                    Text(
-                        text = "Update Failed",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
-                    Text(
-                        text = updateState.message,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                },
-                confirmButton = {
-                    HelperButton(
-                        text = "Dismiss",
-                        onClick = onDismiss
-                    )
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(0.94f)
+                        .widthIn(max = 580.dp),
+                    shape = RoundedCornerShape(MorpheDefaults.SectionCornerRadius),
+                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+                    tonalElevation = 2.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Warning,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Text(
+                                    text = "Update Failed",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Close,
+                                    contentDescription = "Close",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = updateState.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(42.dp),
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            onClick = onDismiss
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Dismiss",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
                 }
-            )
+            }
         }
         else -> {}
     }
