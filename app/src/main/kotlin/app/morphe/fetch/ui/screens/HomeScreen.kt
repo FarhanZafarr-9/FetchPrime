@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +27,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.rememberScrollState
@@ -222,9 +225,8 @@ internal fun HelperScreen(
 
                     if (updateState is UpdateState.Available && request == null) {
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(14.dp),
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = MorpheDefaults.ContentPadding)
@@ -255,11 +257,19 @@ internal fun HelperScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                HelperButton(
-                                    text = "Update Now",
-                                    onClick = { onDownloadUpdate(updateState.info) },
-                                    modifier = Modifier.height(34.dp)
-                                )
+                                Surface(
+                                    shape = RoundedCornerShape(50),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    onClick = { onDownloadUpdate(updateState.info) }
+                                ) {
+                                    Text(
+                                        text = "Update Now",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -554,9 +564,8 @@ internal fun HelperScreen(
                         if (updateState is UpdateState.Available && request == null) {
                             item {
                                 Surface(
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = RoundedCornerShape(14.dp),
                                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Row(
@@ -585,11 +594,19 @@ internal fun HelperScreen(
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
-                                        HelperButton(
-                                            text = "Update",
-                                            onClick = { onDownloadUpdate(updateState.info) },
-                                            modifier = Modifier.height(32.dp)
-                                        )
+                                        Surface(
+                                            shape = RoundedCornerShape(50),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            onClick = { onDownloadUpdate(updateState.info) }
+                                        ) {
+                                            Text(
+                                                text = "Update",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onPrimary,
+                                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -881,36 +898,124 @@ private fun DownloadCompleteCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                HelperButton(
-                    text = "Send to Morphe",
-                    icon = Icons.Outlined.Build,
-                    onClick = onSendToMorphe,
-                    modifier = Modifier.weight(1f)
-                )
-                HelperOutlinedButton(
-                    text = "Install APK",
-                    icon = Icons.Outlined.InstallMobile,
-                    onClick = onInstall,
-                    modifier = Modifier.weight(1f)
-                )
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(42.dp),
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.primary,
+                    onClick = onSendToMorphe
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Build,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Send to Morphe",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(42.dp),
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                    onClick = onInstall
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.InstallMobile,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Install APK",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                HelperOutlinedButton(
-                    text = "Share",
-                    icon = Icons.Outlined.Share,
-                    onClick = onShare,
-                    modifier = Modifier.weight(1f)
-                )
-                HelperButton(
-                    text = "Done",
-                    icon = Icons.Outlined.Check,
-                    onClick = onDone,
-                    modifier = Modifier.weight(1f)
-                )
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(42.dp),
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    onClick = onShare
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Share,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Share",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(42.dp),
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    onClick = onDone
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Done",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             }
         }
     }
@@ -971,13 +1076,20 @@ internal fun CachedAppCard(
                     )
                 }
 
-                HelperIconButton(
-                    icon = Icons.Outlined.DeleteOutline,
-                    contentDescription = "Remove from list",
-                    onClick = onRemove,
-                    modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = onRemove),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.DeleteOutline,
+                        contentDescription = "Remove from list",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                    )
+                }
             }
 
             FlowRow(
@@ -1005,37 +1117,120 @@ internal fun CachedAppCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    HelperButton(
-                        text = "Send to Morphe",
-                        icon = Icons.Outlined.Build,
-                        onClick = onSendToMorphe,
-                        modifier = Modifier.weight(1f)
-                    )
-                    HelperOutlinedButton(
-                        text = "Install",
-                        icon = Icons.Outlined.InstallMobile,
-                        onClick = onInstall,
-                        modifier = Modifier.weight(1f)
-                    )
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp),
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.primary,
+                        onClick = onSendToMorphe
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Build,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = "Send to Morphe",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp),
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        onClick = onInstall
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.InstallMobile,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = "Install",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(38.dp),
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    onClick = onShare
                 ) {
-                    HelperOutlinedButton(
-                        text = "Share",
-                        icon = Icons.Outlined.Share,
-                        onClick = onShare,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Share,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Share",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             } else {
-                HelperOutlinedButton(
-                    text = "Search again",
-                    icon = Icons.Outlined.Download,
-                    onClick = onSearchAgain,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                    onClick = onSearchAgain
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Download,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Search again",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
         }
     }
