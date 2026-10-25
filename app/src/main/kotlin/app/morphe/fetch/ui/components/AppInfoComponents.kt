@@ -508,7 +508,7 @@ internal fun EmptyLaunchState(
                 if (suggestions.isNotEmpty()) {
                     Surface(
                         shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                        color = Color.Transparent,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column {
@@ -516,7 +516,7 @@ internal fun EmptyLaunchState(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        .padding(horizontal = 4.dp, vertical = 4.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -534,13 +534,11 @@ internal fun EmptyLaunchState(
                                         )
                                     }
                                 }
-                                MorpheDivider(fullWidth = true)
                             }
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(max = 280.dp)
-                                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                                    .heightIn(max = 280.dp),
                                 verticalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
                                 items(
