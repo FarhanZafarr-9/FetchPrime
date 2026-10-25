@@ -4,7 +4,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -34,7 +34,7 @@ import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.AlertDialog
+
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,6 +62,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -137,46 +139,48 @@ internal fun AppInfoCard(
                     )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(MorpheDefaults.PillShape)
-                        .clickable {
-                            clipboard?.setPrimaryClip(
-                                ClipData.newPlainText("package", request.packageName)
-                            )
-                            copied = true
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    LaunchedEffect(copied) {
-                        if (copied) {
-                            delay(2000)
-                            copied = false
-                        }
+                Surface(
+                    modifier = Modifier.size(36.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    onClick = {
+                        clipboard?.setPrimaryClip(
+                            ClipData.newPlainText("package", request.packageName)
+                        )
+                        copied = true
                     }
-                    Icon(
-                        imageVector = if (copied) Icons.Outlined.Check else Icons.Outlined.ContentCopy,
-                        contentDescription = if (copied) "Copied package" else "Copy package",
-                        tint = if (copied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
-                    )
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        LaunchedEffect(copied) {
+                            if (copied) {
+                                delay(2000)
+                                copied = false
+                            }
+                        }
+                        Icon(
+                            imageVector = if (copied) Icons.Outlined.Check else Icons.Outlined.ContentCopy,
+                            contentDescription = if (copied) "Copied package" else "Copy package",
+                            tint = if (copied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
                 }
 
                 if (onClearRequest != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(MorpheDefaults.PillShape)
-                            .clickable { onClearRequest() },
-                        contentAlignment = Alignment.Center
+                    Surface(
+                        modifier = Modifier.size(36.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        onClick = onClearRequest
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Close,
-                            contentDescription = "New search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp)
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Outlined.Close,
+                                contentDescription = "New search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(17.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -235,7 +239,7 @@ private fun InfoBadge(
     contentColor: Color
 ) {
     Surface(
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(50),
         color = color,
         contentColor = contentColor
     ) {
@@ -438,9 +442,8 @@ internal fun EmptyLaunchState(
 
                 if (promptMessage != null) {
                     Surface(
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -466,9 +469,8 @@ internal fun EmptyLaunchState(
 
                 if (isCatalogLoading && suggestions.isEmpty() && searchQuery.isNotBlank()) {
                     Surface(
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -492,9 +494,8 @@ internal fun EmptyLaunchState(
 
                 if (suggestions.isNotEmpty()) {
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column {
@@ -526,79 +527,87 @@ internal fun EmptyLaunchState(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(max = 280.dp)
-                                    .padding(vertical = 4.dp)
+                                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
                                 items(
-                                    items = suggestions,
-                                    key = { it.packageName }
-                                ) { app ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                keyboardController?.hide()
-                                                focusManager.clearFocus()
-                                                promptMessage = null
-                                                onSearch(app.packageName, null)
-                                            }
-                                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        AppAvatar(
-                                            packageName = app.packageName,
-                                            initial = app.name.firstOrNull()?.uppercaseChar() ?: '?',
-                                            iconUrl = app.iconUrl,
-                                            size = 36.dp,
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = app.name,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.SemiBold,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                            val matchReason = remember(app, searchQuery) {
-                                                if (searchQuery.isNotBlank()) app.matchingReason(searchQuery) else null
-                                            }
-                                            if (matchReason != null) {
-                                                val badgeText = when (matchReason) {
-                                                    is MatchReason.SourceRepo -> "Source: ${matchReason.repo}"
-                                                    is MatchReason.Patch -> "Patch: ${matchReason.patchName}"
-                                                    is MatchReason.Description -> "Patch: ${matchReason.patchName}"
-                                                }
-                                                Text(
-                                                    text = badgeText,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.primary,
-                                                    fontWeight = FontWeight.Medium,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                            } else {
-                                                Text(
-                                                    text = app.packageName,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                            }
+                                    count = suggestions.size,
+                                    key = { suggestions[it].packageName }
+                                ) { index ->
+                                    val app = suggestions[index]
+                                    val position = connectedPosition(index, suggestions.size)
+                                    val shape = connectedCardShape(position, largeRadius = 10.dp, smallRadius = 4.dp)
+                                    Surface(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = shape,
+                                        color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+                                        onClick = {
+                                            keyboardController?.hide()
+                                            focusManager.clearFocus()
+                                            promptMessage = null
+                                            onSearch(app.packageName, null)
                                         }
-                                        if (app.patchCount > 0) {
-                                            Surface(
-                                                shape = RoundedCornerShape(6.dp),
-                                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                            ) {
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            AppAvatar(
+                                                packageName = app.packageName,
+                                                initial = app.name.firstOrNull()?.uppercaseChar() ?: '?',
+                                                iconUrl = app.iconUrl,
+                                                size = 36.dp,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            Column(modifier = Modifier.weight(1f)) {
                                                 Text(
-                                                    text = "${app.patchCount} patches",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    fontWeight = FontWeight.Medium,
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    text = app.name,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
                                                 )
+                                                val matchReason = remember(app, searchQuery) {
+                                                    if (searchQuery.isNotBlank()) app.matchingReason(searchQuery) else null
+                                                }
+                                                if (matchReason != null) {
+                                                    val badgeText = when (matchReason) {
+                                                        is MatchReason.SourceRepo -> "Source: ${matchReason.repo}"
+                                                        is MatchReason.Patch -> "Patch: ${matchReason.patchName}"
+                                                        is MatchReason.Description -> "Patch: ${matchReason.patchName}"
+                                                    }
+                                                    Text(
+                                                        text = badgeText,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        fontWeight = FontWeight.Medium,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        text = app.packageName,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
+                                            if (app.patchCount > 0) {
+                                                Surface(
+                                                    shape = RoundedCornerShape(50),
+                                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                                ) {
+                                                    Text(
+                                                        text = "${app.patchCount} patches",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -608,59 +617,117 @@ internal fun EmptyLaunchState(
                     }
                 }
 
-                HelperButton(
-                    text = "Search APK",
-                    onClick = handleSearchSubmission,
-                    icon = Icons.Outlined.Search,
-                    enabled = searchQuery.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp),
+                    shape = RoundedCornerShape(50),
+                    color = if (searchQuery.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    contentColor = if (searchQuery.isNotBlank()) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    onClick = { if (searchQuery.isNotBlank()) handleSearchSubmission() }
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Search APK",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
 
-        HelperOutlinedButton(
-            text = "Find New Apps",
-            onClick = onFindApps,
-            icon = Icons.Outlined.Explore,
-            modifier = Modifier.fillMaxWidth()
-        )
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(42.dp),
+            shape = RoundedCornerShape(50),
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+            contentColor = MaterialTheme.colorScheme.primary,
+            onClick = onFindApps
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Explore,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = "Find New Apps",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
     }
 
     if (pendingUnconfirmedQuery != null) {
         val unconfirmed = pendingUnconfirmedQuery!!
-        AlertDialog(
+        Dialog(
             onDismissRequest = { pendingUnconfirmedQuery = null },
-            icon = {
-                Icon(
-                    imageVector = Icons.Outlined.Info,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
-                )
-            },
-            title = {
-                Text(
-                    text = "App Name Entered",
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium
-                )
-            },
-            text = {
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier
+                    .fillMaxWidth(0.92f)
+                    .padding(vertical = 8.dp)
+            ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        text = "\"$unconfirmed\" was not selected from the list and is not a package name (e.g. com.example.app).",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "APK repositories require an exact package name to locate downloads. Searching by app name directly may fail to find APKs.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    // Header
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "App Name Entered",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
 
+                    // Body text
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = "\"$unconfirmed\" was not selected from the list and is not a package name (e.g. com.example.app).",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "APK repositories require an exact package name to locate downloads. Searching by app name directly may fail to find APKs.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Suggestions
                     if (pendingSuggestions.isNotEmpty()) {
                         Text(
                             text = "Did you mean:",
@@ -668,15 +735,15 @@ internal fun EmptyLaunchState(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary
                         )
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            pendingSuggestions.forEach { app ->
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            pendingSuggestions.forEachIndexed { index, app ->
+                                val pos = connectedPosition(index, pendingSuggestions.size)
                                 Surface(
-                                    shape = RoundedCornerShape(10.dp),
+                                    shape = connectedCardShape(pos),
                                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(10.dp))
+                                        .clip(connectedCardShape(pos))
                                         .clickable {
                                             val pkg = app.packageName
                                             pendingUnconfirmedQuery = null
@@ -685,7 +752,7 @@ internal fun EmptyLaunchState(
                                         }
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                                     ) {
@@ -719,26 +786,51 @@ internal fun EmptyLaunchState(
                             }
                         }
                     }
+
+                    // Action buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(50))
+                                .clickable { pendingUnconfirmedQuery = null }
+                        ) {
+                            Text(
+                                text = "Correct info",
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(50))
+                                .clickable {
+                                    val raw = unconfirmed
+                                    pendingUnconfirmedQuery = null
+                                    onSearch(raw, null)
+                                }
+                        ) {
+                            Text(
+                                text = "Search anyway",
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
                 }
-            },
-            confirmButton = {
-                HelperButton(
-                    text = "Proceed to search",
-                    onClick = {
-                        val raw = unconfirmed
-                        pendingUnconfirmedQuery = null
-                        onSearch(raw, null)
-                    }
-                )
-            },
-            dismissButton = {
-                HelperOutlinedButton(
-                    text = "Correct info",
-                    onClick = {
-                        pendingUnconfirmedQuery = null
-                    }
-                )
             }
-        )
+        }
     }
 }
