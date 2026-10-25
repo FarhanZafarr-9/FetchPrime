@@ -242,37 +242,29 @@ internal fun CaptchaBrowserScreen(
                     onClick = onClose
                 )
             }
-            if (candidate.captchaUrl != null && !candidate.directDownload) {
-                InfoBox(title = "Solve the captcha", icon = Icons.Outlined.Shield) {
-                    Text(
-                        text = "When the page starts the download, the file is captured and " +
-                            "returned to Morphe automatically.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+            val hasAutopilot = autoPilotStatus != null
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                if (candidate.captchaUrl != null && !candidate.directDownload) {
+                    SettingsRow(
+                        icon = Icons.Outlined.Shield,
+                        title = "Solve the captcha",
+                        subtitle = "When the page starts the download, the file is captured automatically.",
+                        position = if (hasAutopilot) ConnectedPosition.Top else ConnectedPosition.Single
+                    )
+                } else {
+                    SettingsRow(
+                        icon = Icons.Outlined.OpenInBrowser,
+                        title = "Find the download link",
+                        subtitle = "package \"${candidate.packageName}\" · version \"${candidate.versionDisplay}\"",
+                        position = if (hasAutopilot) ConnectedPosition.Top else ConnectedPosition.Single
                     )
                 }
-            } else {
-                InfoBox(title = "Find the download link", icon = Icons.Outlined.OpenInBrowser) {
-                    Text(
-                        text = "The app downloads the file once the page offers it.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "package \"${candidate.packageName}\" · version " +
-                            "\"${candidate.versionDisplay}\"",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            autoPilotStatus?.let { status ->
-                InfoBox(title = "Auto-pilot", icon = Icons.Outlined.Download) {
-                    Text(
-                        text = status,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
+                autoPilotStatus?.let { status ->
+                    SettingsRow(
+                        icon = Icons.Outlined.Download,
+                        title = "Auto-pilot",
+                        subtitle = status,
+                        position = ConnectedPosition.Bottom
                     )
                 }
             }
