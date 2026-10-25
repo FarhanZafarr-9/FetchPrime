@@ -524,87 +524,6 @@ internal fun SourcePageContent(
             onOpenSite = onOpenSite
         )
 
-        // Fallback secondary controls when no candidate card is rendered
-        val hasRenderedCandidates = (candidateState as? ResolveState.Done)?.candidates?.isNotEmpty() == true
-        if (!hasRenderedCandidates && (group.source.supportsHistory || manual != null)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 2.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (group.source.supportsHistory) {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = if (showHistory) {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
-                        } else {
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
-                        },
-                        contentColor = if (showHistory) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        onClick = {
-                            showHistory = !showHistory
-                            if (showHistory && group.history is VersionHistoryState.Idle) {
-                                onVersionHistory(group.source)
-                            }
-                        }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = if (showHistory) Icons.Outlined.ExpandLess else Icons.Outlined.History,
-                                contentDescription = null,
-                                tint = if (showHistory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = if (showHistory) "Hide versions" else "Versions",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-                } else {
-                    Spacer(Modifier.weight(1f))
-                }
-
-                if (manual != null) {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        onClick = { onSolveCaptcha(manual) }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.OpenInBrowser,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = "Open site",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
         if (showHistory) {
             VersionHistorySection(
                 source = group.source,
@@ -984,7 +903,87 @@ internal fun CandidateResolveSection(
 
         is ResolveState.Done -> {
             if (state.candidates.isEmpty()) {
-                InfoCard(emptyText)
+                SurfaceCard(
+                    cornerRadius = 14.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = emptyText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (onToggleVersions != null || onOpenSite != null) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                if (onToggleVersions != null) {
+                                    Surface(
+                                        shape = RoundedCornerShape(50),
+                                        color = if (isVersionsOpen) {
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                                        } else {
+                                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                                        },
+                                        contentColor = if (isVersionsOpen) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                        onClick = onToggleVersions
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isVersionsOpen) Icons.Outlined.ExpandLess else Icons.Outlined.History,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            Text(
+                                                text = if (isVersionsOpen) "Hide versions" else "Versions",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                    }
+                                }
+                                if (onOpenSite != null) {
+                                    Surface(
+                                        shape = RoundedCornerShape(50),
+                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        onClick = onOpenSite
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Outlined.OpenInBrowser,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            Text(
+                                                text = "Open site",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             } else {
                 state.candidates.forEach { candidate ->
                     CandidateCard(
