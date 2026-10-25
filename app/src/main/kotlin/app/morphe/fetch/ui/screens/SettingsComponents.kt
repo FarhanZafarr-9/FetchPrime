@@ -31,11 +31,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -113,67 +116,56 @@ internal fun CacheMetricTile(
     onClean: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.colorScheme
     SurfaceCard(
         modifier = modifier,
-        cornerRadius = MorpheDefaults.CompactCornerRadius
+        shape = connectedCardShape(ConnectedPosition.Single),
+        color = colors.surfaceColorAtElevation(3.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(
+                    horizontal = MorpheDefaults.ContentPadding,
+                    vertical = MorpheDefaults.ContentPaddingSmall + 4.dp
+                ),
+            horizontalArrangement = Arrangement.spacedBy(MorpheDefaults.ContentPadding),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            ThemedIcon(
+                icon = Icons.Outlined.CleaningServices,
+                tint = colors.primary,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.CleaningServices,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
-                    onClick = onClean
-                ) {
-                    Text(
-                        text = "Clean",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = "Cache Storage",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.onSurface
                 )
                 Text(
-                    text = cacheBytes.formatBytes(),
-                    style = MaterialTheme.typography.titleMedium,
+                    text = if (cacheBytes > 0L) "${cacheBytes.formatBytes()} used by cached APKs" else "Cache is clean (0 B)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = if (cacheBytes > 0L) colors.error.copy(alpha = 0.15f) else colors.surfaceVariant.copy(alpha = 0.3f),
+                onClick = { if (cacheBytes > 0L) onClean() }
+            ) {
+                Text(
+                    text = "Clear",
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    color = if (cacheBytes > 0L) colors.error else colors.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                 )
             }
         }
@@ -375,20 +367,64 @@ internal fun CompactSwitchRow(
     }
 }
 
+internal enum class ConnectedPosition {
+    Single,
+    First,
+    Middle,
+    Last
+}
+
+internal fun connectedCardShape(
+    position: ConnectedPosition,
+    largeRadius: androidx.compose.ui.unit.Dp = 16.dp,
+    smallRadius: androidx.compose.ui.unit.Dp = 4.dp
+): RoundedCornerShape {
+    return when (position) {
+        ConnectedPosition.Single -> RoundedCornerShape(largeRadius)
+        ConnectedPosition.First -> RoundedCornerShape(
+            topStart = largeRadius,
+            topEnd = largeRadius,
+            bottomStart = smallRadius,
+            bottomEnd = smallRadius
+        )
+        ConnectedPosition.Middle -> RoundedCornerShape(smallRadius)
+        ConnectedPosition.Last -> RoundedCornerShape(
+            topStart = smallRadius,
+            topEnd = smallRadius,
+            bottomStart = largeRadius,
+            bottomEnd = largeRadius
+        )
+    }
+}
+
+internal fun connectedPosition(index: Int, count: Int): ConnectedPosition = when {
+    count <= 1 -> ConnectedPosition.Single
+    index == 0 -> ConnectedPosition.First
+    index == count - 1 -> ConnectedPosition.Last
+    else -> ConnectedPosition.Middle
+}
+
 @Composable
 internal fun SettingsGroup(
     title: String,
     icon: ImageVector,
+    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(MorpheDefaults.ContentPadding)
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        MorpheSectionTitle(text = title, icon = icon)
-        SectionCard {
-            Column(content = content)
-        }
+        MorpheSectionTitle(
+            text = title,
+            icon = icon,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+            content = content
+        )
     }
 }
 
@@ -400,59 +436,77 @@ internal fun SettingsRow(
     value: String? = null,
     onClick: (() -> Unit)? = null,
     leading: (@Composable () -> Unit)? = null,
-    trailing: (@Composable () -> Unit)? = null
+    trailing: (@Composable () -> Unit)? = null,
+    position: ConnectedPosition = ConnectedPosition.Single,
+    isDestructive: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(MorpheDefaults.SettingsCornerRadius))
-            .then(
-                if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
-            )
-            .padding(
-                horizontal = MorpheDefaults.ContentPadding,
-                vertical = MorpheDefaults.ContentPaddingSmall + 4.dp
-            ),
-        horizontalArrangement = Arrangement.spacedBy(MorpheDefaults.ContentPadding)
+    val cardColor = if (isDestructive) {
+        colors.errorContainer.copy(alpha = 0.24f)
+    } else {
+        colors.surfaceColorAtElevation(3.dp)
+    }
+
+    SurfaceCard(
+        modifier = modifier,
+        shape = connectedCardShape(position),
+        color = cardColor,
+        onClick = onClick
     ) {
-        if (leading != null) {
-            leading()
-        } else if (icon != null) {
-            ThemedIcon(icon = icon, modifier = Modifier.padding(top = 2.dp))
-        }
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = MorpheDefaults.ContentPadding,
+                    vertical = MorpheDefaults.ContentPaddingSmall + 4.dp
+                ),
+            horizontalArrangement = Arrangement.spacedBy(MorpheDefaults.ContentPadding),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                color = colors.onSurface
-            )
-            subtitle?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant
+            if (leading != null) {
+                leading()
+            } else if (icon != null) {
+                ThemedIcon(
+                    icon = icon,
+                    tint = if (isDestructive) colors.error else colors.primary,
+                    modifier = Modifier.padding(top = 2.dp)
                 )
             }
-            value?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = colors.primary
-                )
-            }
-        }
 
-        Box(
-            modifier = Modifier.align(Alignment.CenterVertically),
-            contentAlignment = Alignment.Center
-        ) {
-            if (trailing != null) trailing() else if (onClick != null) ForwardChevronIcon(size = MorpheDefaults.IconSizeSmall)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = if (isDestructive) FontWeight.Bold else FontWeight.SemiBold,
+                    color = if (isDestructive) colors.error else colors.onSurface
+                )
+                subtitle?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isDestructive) colors.error.copy(alpha = 0.8f) else colors.onSurfaceVariant
+                    )
+                }
+                value?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = if (isDestructive) colors.error else colors.primary
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier.align(Alignment.CenterVertically),
+                contentAlignment = Alignment.Center
+            ) {
+                if (trailing != null) trailing() else if (onClick != null) ForwardChevronIcon(size = MorpheDefaults.IconSizeSmall)
+            }
         }
     }
 }
@@ -464,15 +518,19 @@ internal fun SettingsSwitchItem(
     subtitle: String? = null,
     checked: Boolean,
     onToggle: () -> Unit,
-    leading: (@Composable () -> Unit)? = null
+    leading: (@Composable () -> Unit)? = null,
+    position: ConnectedPosition = ConnectedPosition.Single,
+    modifier: Modifier = Modifier
 ) {
     val enabledLabel = "Enabled"
     val disabledLabel = "Disabled"
     SettingsRow(
+        modifier = modifier,
         icon = icon,
         title = title,
         subtitle = subtitle,
         leading = leading,
+        position = position,
         onClick = onToggle,
         trailing = {
             Box(
@@ -499,34 +557,69 @@ internal fun SettingsChoiceDialog(
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.background,
-        title = {
-            Text(text = title, fontWeight = FontWeight.Bold)
-        },
-        text = {
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .widthIn(max = 580.dp),
+            shape = RoundedCornerShape(MorpheDefaults.SectionCornerRadius),
+            color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+            tonalElevation = 2.dp
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 420.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(MorpheDefaults.ContentPaddingSmall)
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                choices.forEachIndexed { index, choice ->
-                    SettingsOptionCard(
-                        icon = choice.icon,
-                        title = choice.title,
-                        description = choice.description,
-                        selected = index == selectedIndex,
-                        source = choice.source,
-                        onClick = { onSelect(index) }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
                     )
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = "Close",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 440.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    choices.forEachIndexed { index, choice ->
+                        SettingsOptionCard(
+                            icon = choice.icon,
+                            title = choice.title,
+                            description = choice.description,
+                            selected = index == selectedIndex,
+                            source = choice.source,
+                            position = connectedPosition(index, choices.size),
+                            onClick = { onSelect(index) }
+                        )
+                    }
                 }
             }
-        },
-        confirmButton = {}
-    )
+        }
+    }
 }
 
 internal fun DownloadLocation.icon(): ImageVector = when (this) {
@@ -550,11 +643,12 @@ internal fun SettingsRowSurface(
     modifier: Modifier = Modifier,
     selected: Boolean = false,
     enabled: Boolean = true,
+    position: ConnectedPosition = ConnectedPosition.Single,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
-    val shape = RoundedCornerShape(MorpheDefaults.SettingsCornerRadius)
+    val shape = connectedCardShape(position)
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -567,14 +661,9 @@ internal fun SettingsRowSurface(
                 }
             ),
         shape = shape,
-        color = if (selected) colors.surfaceVariant else colors.surfaceColorAtElevation(3.dp),
+        color = if (selected) colors.primary.copy(alpha = 0.12f) else colors.surfaceColorAtElevation(3.dp),
         contentColor = colors.onSurface,
-        tonalElevation = if (selected) 0.dp else 1.dp,
-        border = if (selected) {
-            BorderStroke(1.5.dp, colors.onSurface.copy(alpha = 0.5f))
-        } else {
-            null
-        }
+        tonalElevation = if (selected) 0.dp else 1.dp
     ) {
         content()
     }
@@ -588,14 +677,15 @@ internal fun SettingsOptionCard(
     selected: Boolean,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    source: DownloadSource? = null
+    source: DownloadSource? = null,
+    position: ConnectedPosition = ConnectedPosition.Single
 ) {
     val colors = MaterialTheme.colorScheme
-    SettingsRowSurface(selected = selected, enabled = enabled, onClick = onClick) {
+    SettingsRowSurface(selected = selected, enabled = enabled, position = position, onClick = onClick) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(MorpheDefaults.ContentPadding),
+                .padding(horizontal = MorpheDefaults.ContentPadding, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(MorpheDefaults.ItemSpacing),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -610,12 +700,12 @@ internal fun SettingsOptionCard(
             }
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
                     title,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                     color = colors.onSurface
                 )
                 Text(
@@ -638,44 +728,91 @@ internal fun DownloadHistorySection(
 ) {
     val context = LocalContext.current
     var localCleared by remember { mutableStateOf(0) }
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(MorpheDefaults.ItemSpacing)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(MorpheDefaults.ItemSpacing),
-            verticalAlignment = Alignment.CenterVertically
+    val currentEntries = remember(entries.size, entries.lastOrNull(), localCleared) { entries.toList() }
+
+    if (currentEntries.isEmpty()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 36.dp, horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.History,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
             Text(
-                text = "Download history",
+                text = "No Download History",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
+                color = MaterialTheme.colorScheme.onSurface
             )
-            HelperOutlinedButton(
-                text = "Clear",
-                enabled = entries.isNotEmpty(),
-                onClick = {
-                    onClear()
-                    localCleared++
-                },
-                modifier = Modifier.width(MorpheDefaults.CompactButtonWidth)
+            Text(
+                text = "Downloaded APKs and hand-off files will appear here for quick access and sharing.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
         }
-
-        val currentEntries = remember(entries.size, entries.lastOrNull(), localCleared) { entries.toList() }
-        if (currentEntries.isEmpty()) {
-            InfoCard("No hand-offs recorded yet. Downloads and picked files you return to Morphe show up here.")
-        } else {
-            currentEntries.forEach { entry ->
-                val usable = remember(entry.uri) { context.isHistoryUriUsable(entry.uri) }
-                HistoryEntryCard(
-                    entry = entry,
-                    usable = usable,
-                    onOpen = { onOpen(entry) },
-                    onShare = { onShare(entry) }
+    } else {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${currentEntries.size} saved APK${if (currentEntries.size == 1) "" else "s"}",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.14f),
+                    onClick = {
+                        onClear()
+                        localCleared++
+                    }
+                ) {
+                    Text(
+                        text = "Clear All",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                currentEntries.forEachIndexed { index, entry ->
+                    val usable = remember(entry.uri) { context.isHistoryUriUsable(entry.uri) }
+                    HistoryEntryCard(
+                        entry = entry,
+                        usable = usable,
+                        position = connectedPosition(index, currentEntries.size),
+                        onOpen = { onOpen(entry) },
+                        onShare = { onShare(entry) }
+                    )
+                }
             }
         }
     }
@@ -686,82 +823,131 @@ internal fun HistoryEntryCard(
     entry: DownloadHistoryEntry,
     usable: Boolean,
     onOpen: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    position: ConnectedPosition = ConnectedPosition.Single,
+    modifier: Modifier = Modifier
 ) {
-    SurfaceCard(cornerRadius = MorpheDefaults.CompactCornerRadius) {
+    val colors = MaterialTheme.colorScheme
+    SurfaceCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = connectedCardShape(position),
+        color = colors.surfaceColorAtElevation(3.dp)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(MorpheDefaults.ContentPadding),
-            verticalArrangement = Arrangement.spacedBy(MorpheDefaults.ItemSpacing)
+                .padding(
+                    horizontal = MorpheDefaults.ContentPadding,
+                    vertical = MorpheDefaults.ContentPaddingSmall + 4.dp
+                ),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(MorpheDefaults.ItemSpacing),
-                verticalAlignment = Alignment.Top
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                ThemedIcon(
+                    icon = Icons.Outlined.History,
+                    tint = colors.primary,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
                         text = entry.appName,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = entry.packageName,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = buildString {
+                            entry.versionName?.let { append(it).append(" · ") }
+                            append(entry.sourceName)
+                            append(" · ")
+                            append(entry.fileName)
+                        },
                         style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+
                 Text(
                     text = formatHistoryTimestamp(entry.timestamp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
-            Text(
-                text = buildString {
-                    entry.versionName?.let { append(it).append(" · ") }
-                    append(entry.sourceName)
-                    append(" · ")
-                    append(entry.fileName)
-                    if (!entry.fileKind.equals("web", ignoreCase = true)) {
-                        append(" · ")
-                        append(entry.fileKind.uppercase(Locale.US))
-                    }
-                },
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+
             if (usable) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(MorpheDefaults.ItemSpacing)
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    HelperButton(
-                        text = "Share",
-                        onClick = onShare,
-                        icon = Icons.Outlined.Share,
-                        modifier = Modifier.weight(1f)
-                    )
-                    HelperOutlinedButton(
-                        text = "Open",
-                        onClick = onOpen,
-                        icon = Icons.Outlined.FolderOpen,
-                        modifier = Modifier.weight(1f)
-                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = colors.surfaceVariant.copy(alpha = 0.5f),
+                            onClick = onShare
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Share,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = colors.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "Share",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = colors.primary.copy(alpha = 0.15f),
+                            onClick = onOpen
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.FolderOpen,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = colors.primary
+                                )
+                                Text(
+                                    text = "Open",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.primary
+                                )
+                            }
+                        }
+                    }
                 }
             } else {
                 Text(
-                    text = "File no longer available (temporary hand-off files are cleaned up after Morphe copies them).",
-                    color = MaterialTheme.colorScheme.error,
+                    text = "File no longer available (cleaned up after hand-off)",
+                    color = colors.error.copy(alpha = 0.8f),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
