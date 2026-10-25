@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import java.util.Locale
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -59,7 +58,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -165,8 +163,8 @@ internal fun AppSearchBar(
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
         )
     )
 }
@@ -187,8 +185,7 @@ internal fun ArchiveFilterRow(
                 .fillMaxWidth()
                 .height(44.dp),
             shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         ) {
             Row(
                 modifier = Modifier
@@ -209,9 +206,6 @@ internal fun ArchiveFilterRow(
                         } else {
                             Color.Transparent
                         },
-                        border = if (isSelected) {
-                            BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                        } else null,
                         onClick = { onTabSelect(t) }
                     ) {
                         Row(
@@ -303,12 +297,8 @@ internal fun StatusFilterDropdown(
             color = if (isFiltered) {
                 MaterialTheme.colorScheme.primaryContainer
             } else {
-                MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             },
-            border = BorderStroke(
-                1.dp,
-                if (isFiltered) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-            ),
             modifier = Modifier.height(36.dp)
         ) {
             Row(
@@ -353,7 +343,7 @@ internal fun StatusFilterDropdown(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp))
+            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             DropdownMenuItem(
                 text = {
@@ -439,7 +429,7 @@ internal fun AppBrowserRow(
     val cardColor = if (selected) {
         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
     } else {
-        MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     }
     val borderWidth = if (selected) 1.5.dp else 0.dp
     val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
@@ -714,12 +704,31 @@ internal fun AppDetailView(
                     }
 
                     if (onGetApk != null) {
-                        HelperButton(
-                            text = "Get APK",
-                            icon = Icons.Outlined.Download,
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
                             onClick = { onGetApk(app.packageName, app.name) },
                             modifier = Modifier.fillMaxWidth()
-                        )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Download,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = "Get APK",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -781,7 +790,7 @@ internal fun AppSourceCard(
     val colors = MaterialTheme.colorScheme
     SettingsItemCard(
         onClick = null,
-        borderWidth = 1.dp
+        borderWidth = 0.dp
     ) {
         Column(
             modifier = Modifier.padding(vertical = 10.dp),
@@ -905,53 +914,56 @@ internal fun AppSourceCard(
                                 val exclusiveSet = remember(source.exclusivePatches) {
                                     source.exclusivePatches.map { it.lowercase(Locale.US) }.toSet()
                                 }
-                                sortedPatches.forEach { patch ->
+                                sortedPatches.forEachIndexed { index, patch ->
                                     val isExclusive = patch.name.lowercase(Locale.US) in exclusiveSet
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .then(
-                                                if (isExclusive) {
-                                                    Modifier
-                                                        .background(
-                                                            color = colors.primaryContainer.copy(alpha = 0.25f),
-                                                            shape = RoundedCornerShape(8.dp)
-                                                        )
-                                                        .padding(horizontal = 8.dp, vertical = 6.dp)
-                                                } else Modifier
-                                            ),
-                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    val pos = connectedPosition(index, sortedPatches.size)
+                                    Surface(
+                                        shape = connectedCardShape(pos),
+                                        color = if (isExclusive) {
+                                            colors.primaryContainer.copy(alpha = 0.25f)
+                                        } else {
+                                            colors.surfaceVariant.copy(alpha = 0.4f)
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(2.dp)
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Extension,
-                                                contentDescription = null,
-                                                tint = if (isExclusive) colors.primary else colors.onSurfaceVariant,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Text(
-                                                text = patch.name,
-                                                fontWeight = FontWeight.Bold,
-                                                color = if (isExclusive) colors.primary else colors.onSurface,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                            if (isExclusive) {
-                                                MorpheStatusBadge(
-                                                    text = "Exclusive",
-                                                    tone = SemanticTone.Warning
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.Extension,
+                                                    contentDescription = null,
+                                                    tint = if (isExclusive) colors.primary else colors.onSurfaceVariant,
+                                                    modifier = Modifier.size(15.dp)
+                                                )
+                                                Text(
+                                                    text = patch.name,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = if (isExclusive) colors.primary else colors.onSurface,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                                if (isExclusive) {
+                                                    MorpheStatusBadge(
+                                                        text = "Exclusive",
+                                                        tone = SemanticTone.Warning
+                                                    )
+                                                }
+                                            }
+                                            patch.description?.takeIf { it.isNotBlank() }?.let { desc ->
+                                                Text(
+                                                    text = desc,
+                                                    color = colors.onSurfaceVariant,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    modifier = Modifier.padding(start = 23.dp)
                                                 )
                                             }
-                                        }
-                                        patch.description?.takeIf { it.isNotBlank() }?.let { desc ->
-                                            Text(
-                                                text = desc,
-                                                color = colors.onSurfaceVariant,
-                                                style = MaterialTheme.typography.bodySmall
-                                            )
                                         }
                                     }
                                 }
@@ -1033,7 +1045,7 @@ internal fun SourceBrowserCard(
         modifier = modifier,
         onClick = { expanded = !expanded },
         cornerRadius = 14.dp,
-        color = colors.surfaceColorAtElevation(3.dp),
+        color = colors.surfaceVariant.copy(alpha = 0.5f),
         borderWidth = 0.dp,
         borderColor = colors.outlineVariant
     ) {
@@ -1190,22 +1202,20 @@ internal fun SourceBrowserCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .then(if (longList) Modifier.verticalScroll(appsScroll) else Modifier),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
-                                sortedApps.forEach { appItem ->
+                                sortedApps.forEachIndexed { index, appItem ->
                                     val isInstalled = isPackageOrPatchedInstalled(appItem.packageName, installedPackages)
                                     val isLiked = appItem.packageName in favourites
+                                    val pos = connectedPosition(index, sortedApps.size)
                                     Surface(
                                         onClick = { onSelectApp?.invoke(appItem) },
-                                        shape = RoundedCornerShape(8.dp),
+                                        shape = connectedCardShape(pos),
                                         color = if (isInstalled) {
                                             colors.primaryContainer.copy(alpha = 0.22f)
                                         } else {
                                             colors.surfaceVariant.copy(alpha = 0.5f)
                                         },
-                                        border = if (isInstalled) {
-                                            BorderStroke(1.dp, colors.primary.copy(alpha = 0.35f))
-                                        } else null,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Row(
