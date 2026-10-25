@@ -519,15 +519,17 @@ private fun MasterListPane(
                                 state = listState,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 64.dp),
-                                verticalArrangement = Arrangement.spacedBy(MorpheDefaults.ItemSpacing)
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
-                                items(
+                                itemsIndexed(
                                     items = filteredSources,
-                                    key = { it.repo },
-                                    contentType = { "bundle_card" }
-                                ) { source ->
+                                    key = { _, it -> it.repo },
+                                    contentType = { _, _ -> "bundle_card" }
+                                ) { index, source ->
+                                    val position = connectedPosition(index, filteredSources.size)
                                     SourceBrowserCard(
                                         source = source,
+                                        position = position,
                                         searchQuery = query,
                                         installedPackages = installedPackages,
                                         favourites = favourites,
@@ -541,13 +543,6 @@ private fun MasterListPane(
                                     )
                                 }
                             }
-                            LazyListScrollbar(
-                                listState = listState,
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .fillMaxHeight()
-                                    .padding(bottom = 64.dp)
-                            )
                             val showFab by remember {
                                 derivedStateOf { listState.firstVisibleItemIndex > 0 }
                             }
@@ -615,13 +610,6 @@ private fun MasterListPane(
                                     )
                                 }
                             }
-                            LazyListScrollbar(
-                                listState = listState,
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .fillMaxHeight()
-                                    .padding(bottom = 64.dp)
-                            )
                             val showFab by remember {
                                 derivedStateOf { listState.firstVisibleItemIndex > 0 }
                             }
