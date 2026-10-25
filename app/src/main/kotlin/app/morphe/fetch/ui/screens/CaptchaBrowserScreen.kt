@@ -45,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import java.util.Locale
 
@@ -249,14 +250,14 @@ internal fun CaptchaBrowserScreen(
                         icon = Icons.Outlined.Shield,
                         title = "Solve the captcha",
                         subtitle = "When the page starts the download, the file is captured automatically.",
-                        position = if (hasAutopilot) ConnectedPosition.Top else ConnectedPosition.Single
+                        position = if (hasAutopilot) ConnectedPosition.First else ConnectedPosition.Single
                     )
                 } else {
                     SettingsRow(
                         icon = Icons.Outlined.OpenInBrowser,
                         title = "Find the download link",
                         subtitle = "package \"${candidate.packageName}\" · version \"${candidate.versionDisplay}\"",
-                        position = if (hasAutopilot) ConnectedPosition.Top else ConnectedPosition.Single
+                        position = if (hasAutopilot) ConnectedPosition.First else ConnectedPosition.Single
                     )
                 }
                 autoPilotStatus?.let { status ->
@@ -264,7 +265,7 @@ internal fun CaptchaBrowserScreen(
                         icon = Icons.Outlined.Download,
                         title = "Auto-pilot",
                         subtitle = status,
-                        position = ConnectedPosition.Bottom
+                        position = ConnectedPosition.Last
                     )
                 }
             }
