@@ -188,34 +188,30 @@ internal fun SourceChipRow(
             }
 
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(50),
                 color = if (selected) {
-                    MaterialTheme.colorScheme.primaryContainer
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
                 } else {
                     MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
                 },
                 contentColor = if (selected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
+                    MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
-                border = BorderStroke(
-                    width = if (selected) 1.5.dp else 1.dp,
-                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                ),
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(50))
                     .clickable { onSelect(0) }
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Layers,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(17.dp),
                         tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
@@ -244,27 +240,23 @@ internal fun SourceChipRow(
                 (group.recommended as? ResolveState.Done)?.candidates?.isNotEmpty() == true)
 
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(50),
                 color = if (selected) {
-                    MaterialTheme.colorScheme.primaryContainer
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
                 } else {
                     MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
                 },
                 contentColor = if (selected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
+                    MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
-                border = BorderStroke(
-                    width = if (selected) 1.5.dp else 1.dp,
-                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                ),
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(50))
                     .clickable { onSelect(tabIndex) }
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -501,6 +493,17 @@ internal fun SourcePageContent(
             group.latest
         }
 
+        val manual = group.manual.firstOrNull()
+        val onOpenSite: (() -> Unit)? = if (manual != null) { { onSolveCaptcha(manual) } } else null
+        val onToggleVersions: (() -> Unit)? = if (group.source.supportsHistory) {
+            {
+                showHistory = !showHistory
+                if (showHistory && group.history is VersionHistoryState.Idle) {
+                    onVersionHistory(group.source)
+                }
+            }
+        } else null
+
         CandidateResolveSection(
             request = request,
             group = group,
@@ -515,75 +518,96 @@ internal fun SourcePageContent(
             onPickDownloadedFile = onPickDownloadedFile,
             onUseInstalledApp = onUseInstalledApp,
             onSolveCaptcha = onSolveCaptcha,
-            installedPackageRefreshToken = installedPackageRefreshToken
+            installedPackageRefreshToken = installedPackageRefreshToken,
+            onToggleVersions = onToggleVersions,
+            isVersionsOpen = showHistory,
+            onOpenSite = onOpenSite
         )
 
-        // Secondary controls: older versions toggle + external site button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (group.source.supportsHistory) {
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable {
+        // Fallback secondary controls when no candidate card is rendered
+        val hasRenderedCandidates = (candidateState as? ResolveState.Done)?.candidates?.isNotEmpty() == true
+        if (!hasRenderedCandidates && (group.source.supportsHistory || manual != null)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (group.source.supportsHistory) {
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = if (showHistory) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                        },
+                        contentColor = if (showHistory) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        onClick = {
                             showHistory = !showHistory
                             if (showHistory && group.history is VersionHistoryState.Idle) {
                                 onVersionHistory(group.source)
                             }
                         }
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = if (showHistory) Icons.Outlined.ExpandLess else Icons.Outlined.History,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = if (showHistory) "Hide versions" else "Versions",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (showHistory) Icons.Outlined.ExpandLess else Icons.Outlined.History,
+                                contentDescription = null,
+                                tint = if (showHistory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = if (showHistory) "Hide versions" else "Versions",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                } else {
+                    Spacer(Modifier.weight(1f))
                 }
-            } else {
-                Spacer(Modifier.weight(1f))
-            }
 
-            val manual = group.manual.firstOrNull()
-            if (manual != null) {
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onSolveCaptcha(manual) }
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.OpenInBrowser,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "Open site",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                if (manual != null) {
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        onClick = { onSolveCaptcha(manual) }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.OpenInBrowser,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "Open site",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                 }
             }
         }
 
         if (showHistory) {
             VersionHistorySection(
+                source = group.source,
                 state = group.history,
                 onDownloadVersion = onDownloadVersion,
                 onSolveCaptcha = onSolveCaptcha
@@ -627,7 +651,7 @@ internal fun SourceBottomBar(
                     .height(MorpheDefaults.DialogButtonHeight)
                     .pressScale(primaryInteractionSource, enabled = action.enabled),
                 interactionSource = primaryInteractionSource,
-                shape = RoundedCornerShape(MorpheDefaults.CardCornerRadius),
+                shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
@@ -662,38 +686,65 @@ internal fun SourceBottomBar(
 
 @Composable
 internal fun VersionHistorySection(
+    source: DownloadSource,
     state: VersionHistoryState,
     onDownloadVersion: (DownloadCandidate) -> Unit,
     onSolveCaptcha: (DownloadCandidate) -> Unit
 ) {
-    when (state) {
-        VersionHistoryState.Idle,
-        VersionHistoryState.Loading -> {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+        ) {
+            SourceAvatar(source = source, size = 18.dp)
+            Text(
+                text = "${source.label} Versions",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        when (state) {
+            VersionHistoryState.Idle,
+            VersionHistoryState.Loading -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                }
             }
-        }
 
-        is VersionHistoryState.Error -> {
-            InfoCard(state.message)
-        }
+            is VersionHistoryState.Error -> {
+                InfoCard(state.message)
+            }
 
-        is VersionHistoryState.Done -> {
-            if (state.candidates.isEmpty()) {
-                InfoCard("No version list was available for this source.")
-            } else {
-                state.candidates.forEach { candidate ->
-                    VersionHistoryRow(
-                        candidate = candidate,
-                        showOpenLink = candidate.identityKey() in state.noDirectDownloadKeys,
-                        onDownloadVersion = { onDownloadVersion(candidate) },
-                        onSolveCaptcha = { onSolveCaptcha(candidate) }
-                    )
+            is VersionHistoryState.Done -> {
+                if (state.candidates.isEmpty()) {
+                    InfoCard("No version list was available for this source.")
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        state.candidates.forEachIndexed { index, candidate ->
+                            val position = connectedPosition(index, state.candidates.size)
+                            VersionHistoryRow(
+                                candidate = candidate,
+                                position = position,
+                                showOpenLink = candidate.identityKey() in state.noDirectDownloadKeys,
+                                onDownloadVersion = { onDownloadVersion(candidate) },
+                                onSolveCaptcha = { onSolveCaptcha(candidate) }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -703,12 +754,14 @@ internal fun VersionHistorySection(
 @Composable
 internal fun VersionHistoryRow(
     candidate: DownloadCandidate,
+    position: ConnectedPosition = ConnectedPosition.Single,
     showOpenLink: Boolean,
     onDownloadVersion: () -> Unit,
     onSolveCaptcha: (DownloadCandidate) -> Unit
 ) {
     val context = LocalContext.current
-    SurfaceCard(cornerRadius = MorpheDefaults.CompactCornerRadius) {
+    val shape = connectedCardShape(position, largeRadius = 14.dp, smallRadius = 4.dp)
+    SurfaceCard(shape = shape) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -733,7 +786,7 @@ internal fun VersionHistoryRow(
                     )
                     if (!candidate.releaseSuffix.isNullOrBlank()) {
                         Surface(
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(50),
                             color = if (candidate.releaseSuffix.equals("secondary", ignoreCase = true)) {
                                 MaterialTheme.colorScheme.tertiaryContainer
                             } else {
@@ -749,7 +802,7 @@ internal fun VersionHistoryRow(
                                 } else {
                                     MaterialTheme.colorScheme.onSecondaryContainer
                                 },
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                             )
                         }
                     }
@@ -775,28 +828,85 @@ internal fun VersionHistoryRow(
             }
             when {
                 showOpenLink || (candidate.captchaUrl != null && !candidate.directDownload) -> {
-                    HelperButton(
-                        text = "Captcha",
-                        onClick = { onSolveCaptcha(candidate) },
-                        icon = Icons.Outlined.VerifiedUser,
-                        modifier = Modifier.widthIn(min = 100.dp)
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        onClick = { onSolveCaptcha(candidate) }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.VerifiedUser,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(Modifier.width(5.dp))
+                            Text(
+                                text = "Captcha",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
                 showOpenLink -> {
-                    HelperOutlinedButton(
-                        text = "Open",
-                        onClick = { onSolveCaptcha(candidate) },
-                        icon = Icons.Outlined.OpenInBrowser,
-                        modifier = Modifier.widthIn(min = 90.dp)
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        onClick = { onSolveCaptcha(candidate) }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.OpenInBrowser,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(Modifier.width(5.dp))
+                            Text(
+                                text = "Open",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
                 else -> {
-                    HelperButton(
-                        text = "Get",
-                        onClick = onDownloadVersion,
-                        icon = Icons.Outlined.Download,
-                        modifier = Modifier.widthIn(min = 90.dp)
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.primary,
+                        onClick = onDownloadVersion
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Download,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(Modifier.width(5.dp))
+                            Text(
+                                text = "Get",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -814,7 +924,10 @@ internal fun CandidateResolveSection(
     onPickDownloadedFile: (DownloadCandidate) -> Unit,
     onUseInstalledApp: (DownloadCandidate) -> Unit,
     onSolveCaptcha: (DownloadCandidate) -> Unit,
-    installedPackageRefreshToken: Int
+    installedPackageRefreshToken: Int,
+    onToggleVersions: (() -> Unit)? = null,
+    isVersionsOpen: Boolean = false,
+    onOpenSite: (() -> Unit)? = null
 ) {
     when (state) {
         ResolveState.Idle -> {
@@ -881,7 +994,10 @@ internal fun CandidateResolveSection(
                         onPickDownloadedFile = { onPickDownloadedFile(candidate) },
                         onUseInstalledApp = { onUseInstalledApp(candidate) },
                         onSolveCaptcha = { onSolveCaptcha(candidate) },
-                        installedPackageRefreshToken = installedPackageRefreshToken
+                        installedPackageRefreshToken = installedPackageRefreshToken,
+                        onToggleVersions = onToggleVersions,
+                        isVersionsOpen = isVersionsOpen,
+                        onOpenSite = onOpenSite
                     )
                 }
             }
@@ -897,7 +1013,10 @@ internal fun CandidateResolveSection(
                     onPickDownloadedFile = { onPickDownloadedFile(candidate) },
                     onUseInstalledApp = { onUseInstalledApp(candidate) },
                     onSolveCaptcha = { onSolveCaptcha(candidate) },
-                    installedPackageRefreshToken = installedPackageRefreshToken
+                    installedPackageRefreshToken = installedPackageRefreshToken,
+                    onToggleVersions = onToggleVersions,
+                    isVersionsOpen = isVersionsOpen,
+                    onOpenSite = onOpenSite
                 )
             }
         }
