@@ -418,6 +418,7 @@ internal fun StatusFilterDropdown(
 @Composable
 internal fun AppBrowserRow(
     app: ArchiveApp,
+    position: ConnectedPosition = ConnectedPosition.Single,
     favourite: Boolean,
     installed: Boolean = false,
     selected: Boolean = false,
@@ -433,11 +434,12 @@ internal fun AppBrowserRow(
     }
     val borderWidth = if (selected) 1.5.dp else 0.dp
     val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+    val shape = connectedCardShape(position)
 
     SurfaceCard(
         modifier = modifier,
         onClick = { onClick(app) },
-        cornerRadius = 14.dp,
+        shape = shape,
         color = cardColor,
         elevation = 0.dp,
         borderWidth = borderWidth,
@@ -901,7 +903,7 @@ internal fun AppSourceCard(
                                     .then(
                                         if (longList) Modifier.verticalScroll(patchesScroll) else Modifier
                                     ),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
                                 val sortedPatches = remember(source.patches, source.exclusivePatches) {
                                     val exclusiveSet = source.exclusivePatches.map { it.lowercase(Locale.US) }.toSet()
