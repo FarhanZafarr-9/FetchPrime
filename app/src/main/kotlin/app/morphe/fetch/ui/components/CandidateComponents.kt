@@ -62,7 +62,8 @@ internal fun CandidateCard(
     installedPackageRefreshToken: Int,
     onToggleVersions: (() -> Unit)? = null,
     isVersionsOpen: Boolean = false,
-    onOpenSite: (() -> Unit)? = null
+    onOpenSite: (() -> Unit)? = null,
+    extraContent: (@Composable ColumnScope.() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val match = candidate.matchSummary(request)
@@ -89,6 +90,11 @@ internal fun CandidateCard(
         candidate.note?.let { note ->
             InfoCard(note)
         }
+
+        // Only show the History circle when versions are supported
+        // Only show Open site when there is a manual candidate
+        // If Open site is the only extra button (no history), make it full-width primary
+        val onlySiteButton = onOpenSite != null && onToggleVersions == null
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -217,7 +223,8 @@ internal fun CandidateCard(
                 }
             }
 
-            if (onOpenSite != null) {
+            // Open site: circle icon when alongside download; hidden when onlySiteButton (shown below)
+            if (onOpenSite != null && !onlySiteButton) {
                 Surface(
                     modifier = Modifier.size(40.dp),
                     shape = CircleShape,
@@ -232,6 +239,38 @@ internal fun CandidateCard(
                             modifier = Modifier.size(18.dp)
                         )
                     }
+                }
+            }
+        }
+
+        // Open site alone → full-width primary pill
+        if (onlySiteButton) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp),
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.primary,
+                onClick = onOpenSite!!
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.OpenInBrowser,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Open site",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
                 }
             }
         }
@@ -274,6 +313,7 @@ internal fun CandidateCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             body()
+            extraContent?.invoke(this)
         }
     } else {
         SurfaceCard(cornerRadius = MorpheDefaults.SectionCornerRadius) {
@@ -284,6 +324,7 @@ internal fun CandidateCard(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 body()
+                extraContent?.invoke(this)
             }
         }
     }

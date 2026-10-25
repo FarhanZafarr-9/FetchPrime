@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -521,17 +522,18 @@ internal fun SourcePageContent(
             installedPackageRefreshToken = installedPackageRefreshToken,
             onToggleVersions = onToggleVersions,
             isVersionsOpen = showHistory,
-            onOpenSite = onOpenSite
+            onOpenSite = onOpenSite,
+            extraContent = if (showHistory) {
+                {
+                    VersionHistorySection(
+                        source = group.source,
+                        state = group.history,
+                        onDownloadVersion = onDownloadVersion,
+                        onSolveCaptcha = onSolveCaptcha
+                    )
+                }
+            } else null
         )
-
-        if (showHistory) {
-            VersionHistorySection(
-                source = group.source,
-                state = group.history,
-                onDownloadVersion = onDownloadVersion,
-                onSolveCaptcha = onSolveCaptcha
-            )
-        }
     }
 }
 
@@ -846,7 +848,8 @@ internal fun CandidateResolveSection(
     installedPackageRefreshToken: Int,
     onToggleVersions: (() -> Unit)? = null,
     isVersionsOpen: Boolean = false,
-    onOpenSite: (() -> Unit)? = null
+    onOpenSite: (() -> Unit)? = null,
+    extraContent: (@Composable ColumnScope.() -> Unit)? = null
 ) {
     when (state) {
         ResolveState.Idle -> {
@@ -982,6 +985,7 @@ internal fun CandidateResolveSection(
                                 }
                             }
                         }
+                        extraContent?.invoke(this)
                     }
                 }
             } else {
@@ -996,7 +1000,8 @@ internal fun CandidateResolveSection(
                         installedPackageRefreshToken = installedPackageRefreshToken,
                         onToggleVersions = onToggleVersions,
                         isVersionsOpen = isVersionsOpen,
-                        onOpenSite = onOpenSite
+                        onOpenSite = onOpenSite,
+                        extraContent = extraContent
                     )
                 }
             }
@@ -1015,7 +1020,8 @@ internal fun CandidateResolveSection(
                     installedPackageRefreshToken = installedPackageRefreshToken,
                     onToggleVersions = onToggleVersions,
                     isVersionsOpen = isVersionsOpen,
-                    onOpenSite = onOpenSite
+                    onOpenSite = onOpenSite,
+                    extraContent = extraContent
                 )
             }
         }
