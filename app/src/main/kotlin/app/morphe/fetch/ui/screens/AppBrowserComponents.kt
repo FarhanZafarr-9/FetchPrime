@@ -1037,6 +1037,7 @@ internal fun isPackageOrPatchedInstalled(packageName: String, installedPackages:
 @Composable
 internal fun SourceBrowserCard(
     source: ArchiveSource,
+    position: ConnectedPosition = ConnectedPosition.Single,
     searchQuery: String = "",
     installedPackages: Set<String> = emptySet(),
     favourites: Set<String> = emptySet(),
@@ -1054,13 +1055,15 @@ internal fun SourceBrowserCard(
     val likedAppsCount = remember(source.apps, favourites) {
         source.apps.count { it.packageName in favourites }
     }
+    val shape = connectedCardShape(position)
 
     SurfaceCard(
         modifier = modifier,
         onClick = { expanded = !expanded },
-        cornerRadius = 14.dp,
+        shape = shape,
         color = colors.surfaceVariant.copy(alpha = 0.5f),
         borderWidth = 0.dp,
+        elevation = 0.dp,
         borderColor = colors.outlineVariant
     ) {
         Column(
