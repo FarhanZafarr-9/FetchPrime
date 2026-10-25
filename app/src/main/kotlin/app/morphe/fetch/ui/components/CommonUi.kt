@@ -153,25 +153,23 @@ internal fun HelperIconButton(
     tint: Color? = null
 ) {
     val primary = MaterialTheme.colorScheme.primary
-    val contentColor = tint ?: if (selected) primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+    val contentColor = tint ?: if (selected) primary else MaterialTheme.colorScheme.onSurfaceVariant
     val interactionSource = remember { MutableInteractionSource() }
     Surface(
         onClick = onClick,
         modifier = modifier
-            .size(MorpheDefaults.GlassButtonHeight)
-            .clip(RoundedCornerShape(MorpheDefaults.CardCornerRadius))
+            .size(38.dp)
             .pressScale(interactionSource),
-        shape = RoundedCornerShape(MorpheDefaults.CardCornerRadius),
-        color = if (selected) primary.copy(alpha = 0.28f) else Color.Transparent,
+        shape = RoundedCornerShape(12.dp),
+        color = if (selected) primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
         contentColor = contentColor,
-        border = BorderStroke(1.dp, primary.copy(alpha = if (selected) 0.6f else 0.32f)),
         interactionSource = interactionSource
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
-                modifier = Modifier.size(MorpheDefaults.IconSizeSmall)
+                modifier = Modifier.size(18.dp)
             )
         }
     }
@@ -198,84 +196,136 @@ internal fun ReuseOfferDialog(
     onUseExisting: (ReuseOption) -> Unit,
     onDownloadNew: () -> Unit
 ) {
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDownloadNew,
-        title = {
-            Text(
-                text = "Use an existing APK?",
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .widthIn(max = 500.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+            tonalElevation = 3.dp
+        ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(MorpheDefaults.ContentPaddingSmall)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.CheckCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = "Use an existing APK?",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
                 Text(
-                    text = "A previous download for this exact version is still available. Pick one to return to Morphe without downloading again.",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "A previous download for this version is already available. Pick one to return without re-downloading.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                options.forEach { option ->
-                    val entry = option.entry
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(MorpheDefaults.CompactCornerRadius))
-                            .clickable { onUseExisting(option) },
-                        shape = RoundedCornerShape(MorpheDefaults.CompactCornerRadius),
-                        color = sourceCardFill(),
-                        border = BorderStroke(1.dp, sourceCardBorder())
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    options.forEachIndexed { index, option ->
+                        val entry = option.entry
+                        val position = connectedPosition(index, options.size)
+                        val shape = connectedCardShape(position, largeRadius = 14.dp, smallRadius = 4.dp)
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = shape,
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            onClick = { onUseExisting(option) }
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = entry.sourceName,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    entry.versionName?.let {
+                                        Text(
+                                            text = "· $it",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    if (option.sizeBytes > 0L) {
+                                        Text(
+                                            text = "· ${option.sizeBytes.formatBytes()}",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                                 Text(
-                                    text = entry.sourceName,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    text = entry.fileName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
-                                entry.versionName?.let {
-                                    Text(
-                                        text = "· $it",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                if (option.sizeBytes > 0L) {
-                                    Text(
-                                        text = "· ${option.sizeBytes.formatBytes()}",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
                             }
-                            Text(
-                                text = entry.fileName,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
                         }
                     }
                 }
-                Spacer(Modifier.height(4.dp))
-                HelperButton(
-                    text = "Download new",
-                    onClick = onDownloadNew,
-                    modifier = Modifier.fillMaxWidth()
-                )
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp),
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                    onClick = onDownloadNew
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Download,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Download new instead",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
-        },
-        confirmButton = {}
-    )
+        }
+    }
 }
 
 internal data class SourceBrand(
