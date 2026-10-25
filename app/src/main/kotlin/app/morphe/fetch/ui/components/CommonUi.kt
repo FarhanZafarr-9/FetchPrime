@@ -150,6 +150,8 @@ internal fun HelperIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     selected: Boolean = false,
+    size: Dp = 38.dp,
+    shape: Shape = RoundedCornerShape(12.dp),
     tint: Color? = null
 ) {
     val primary = MaterialTheme.colorScheme.primary
@@ -158,9 +160,9 @@ internal fun HelperIconButton(
     Surface(
         onClick = onClick,
         modifier = modifier
-            .size(38.dp)
+            .size(size)
             .pressScale(interactionSource),
-        shape = RoundedCornerShape(12.dp),
+        shape = shape,
         color = if (selected) primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
         contentColor = contentColor,
         interactionSource = interactionSource
