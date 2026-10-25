@@ -275,7 +275,7 @@ internal class AppUpdater(
                 "App Updates",
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Notifications for available Morphe Fetch updates"
+                description = "Notifications for available FetchPrime updates"
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -298,11 +298,11 @@ internal class AppUpdater(
 
         val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setContentTitle("Morphe Fetch ${info.tagName} Available")
+            .setContentTitle("FetchPrime ${info.tagName} Available")
             .setContentText("A new version is available$sizeMb. Tap to update.")
             .setStyle(
                 NotificationCompat.BigTextStyle().bigText(
-                    "Morphe Fetch ${info.tagName} is available on GitHub.\nTap to review and install the update."
+                    "FetchPrime ${info.tagName} is available on GitHub.\nTap to review and install the update."
                 )
             )
             .setContentIntent(pendingIntent)

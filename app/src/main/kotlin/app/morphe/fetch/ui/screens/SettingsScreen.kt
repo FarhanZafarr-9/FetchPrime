@@ -1255,7 +1255,7 @@ internal fun HelperSettingsScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = "Morphe Fetch v${BuildConfig.VERSION_NAME}",
+                            text = "FetchPrime v${BuildConfig.VERSION_NAME}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1622,7 +1622,7 @@ internal fun HelperSettingsScreen(
                         icon = Icons.Outlined.FolderOpen,
                         title = "Download Location",
                         subtitle = if (settings.downloadLocation == DownloadLocation.DOWNLOADS) {
-                            "Downloads / Morphe Fetch"
+                            "Downloads / FetchPrime"
                         } else {
                             "App Cache (Temporary)"
                         },
@@ -1796,7 +1796,7 @@ private fun SettingsPreferencesDetail(
                     icon = Icons.Outlined.FolderOpen,
                     title = "Download Location",
                     subtitle = if (settings.downloadLocation == DownloadLocation.DOWNLOADS) {
-                        "Downloads / Morphe Fetch"
+                        "Downloads / FetchPrime"
                     } else {
                         "App Cache (Temporary)"
                     },

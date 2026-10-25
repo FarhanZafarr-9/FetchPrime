@@ -975,7 +975,7 @@ internal fun AppUpdateDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Morphe Fetch ${info.tagName}",
+                                text = "FetchPrime ${info.tagName}",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.primary

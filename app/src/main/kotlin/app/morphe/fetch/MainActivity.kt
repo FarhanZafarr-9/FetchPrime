@@ -179,8 +179,8 @@ class MainActivity : ComponentActivity() {
             return uri
         }
         val cleanName = (fileName ?: uri.lastPathSegment ?: "app.apk").removeSuffix(".zip")
-        // Check Download/Morphe Fetch public directory
-        val downloadsDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Morphe Fetch")
+        // Check Download/FetchPrime public directory
+        val downloadsDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "FetchPrime")
         val directFile = File(downloadsDir, cleanName)
         if (directFile.exists()) {
             return FileProvider.getUriForFile(this, "${packageName}.files", directFile)

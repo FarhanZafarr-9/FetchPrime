@@ -6,7 +6,7 @@ import java.io.ByteArrayInputStream
 import java.util.Locale
 
 /**
- * Lightweight, zero-dependency ad and tracker blocker for Morphe Fetch's in-app WebView.
+ * Lightweight, zero-dependency ad and tracker blocker for FetchPrime's in-app WebView.
  *
  * Drops network requests to ad/tracking networks before sockets open,
  * whitelists critical Cloudflare and APK source domains, and injects cosmetic CSS

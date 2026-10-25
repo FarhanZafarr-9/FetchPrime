@@ -734,11 +734,11 @@ internal fun Context.scheduleTemporaryDelete(file: File) {
 
 internal fun Context.copyToDownloads(file: File): Uri {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        // Remove any prior file with the exact same name in Morphe Fetch downloads directory
+        // Remove any prior file with the exact same name in FetchPrime downloads directory
         runCatching {
             val projection = arrayOf(MediaStore.Downloads._ID)
             val selection = "${MediaStore.Downloads.DISPLAY_NAME} = ? AND ${MediaStore.Downloads.RELATIVE_PATH} LIKE ?"
-            val selectionArgs = arrayOf(file.name, "${Environment.DIRECTORY_DOWNLOADS}/Morphe Fetch%")
+            val selectionArgs = arrayOf(file.name, "${Environment.DIRECTORY_DOWNLOADS}/FetchPrime%")
             contentResolver.query(MediaStore.Downloads.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null)?.use { cursor ->
                 val idCol = cursor.getColumnIndex(MediaStore.Downloads._ID)
                 if (idCol >= 0) {
@@ -754,7 +754,7 @@ internal fun Context.copyToDownloads(file: File): Uri {
         val values = ContentValues().apply {
             put(MediaStore.Downloads.DISPLAY_NAME, file.name)
             put(MediaStore.Downloads.MIME_TYPE, file.mimeType())
-            put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/Morphe Fetch/")
+            put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/FetchPrime/")
             put(MediaStore.Downloads.IS_PENDING, 1)
         }
         val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
@@ -776,7 +776,7 @@ internal fun Context.copyToDownloads(file: File): Uri {
     } else {
         val downloadsDir = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            "Morphe Fetch"
+            "FetchPrime"
         ).apply { mkdirs() }
         val output = File(downloadsDir, file.name)
         file.copyTo(output, overwrite = true)

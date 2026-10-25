@@ -208,7 +208,7 @@ internal fun HelperScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Morphe Fetch",
+                            text = "FetchPrime",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
@@ -252,7 +252,7 @@ internal fun HelperScreen(
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                     Text(
-                                        text = "Tap to review notes and update Morphe Fetch",
+                                        text = "Tap to review notes and update FetchPrime",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -542,7 +542,7 @@ internal fun HelperScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Morphe Fetch",
+                                    text = "FetchPrime",
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onBackground,
