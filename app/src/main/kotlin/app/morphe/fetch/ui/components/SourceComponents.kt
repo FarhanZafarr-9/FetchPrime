@@ -682,7 +682,11 @@ internal fun VersionHistoryRow(
 ) {
     val context = LocalContext.current
     val shape = connectedCardShape(position, largeRadius = 14.dp, smallRadius = 4.dp)
-    SurfaceCard(shape = shape) {
+    SurfaceCard(
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        elevation = 0.dp
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
