@@ -2,6 +2,6 @@
 <resources>
     <color name="splash_background">#F8FAFC</color>
     <color name="window_background">#F8FAFC</color>
-    <color name="launcher_background">#F8FAFC</color>
+    <color name="launcher_background">#FFFFFF</color>
     <color name="launcher_disc">#E0F2FE</color>
 </resources>
