@@ -236,11 +236,10 @@ internal fun CaptchaBrowserScreen(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                HelperOutlinedButton(
-                    text = "Close",
-                    onClick = onClose,
+                HelperHeaderIconButton(
                     icon = Icons.Outlined.Close,
-                    modifier = Modifier.widthIn(min = MorpheDefaults.CompactButtonWidth)
+                    contentDescription = "Close",
+                    onClick = onClose
                 )
             }
             if (candidate.captchaUrl != null && !candidate.directDownload) {
