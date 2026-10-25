@@ -136,10 +136,11 @@ internal fun SurfaceCard(
     }
 }
 
-/** Section container card: roomier radius than a settings row, with a hairline border. */
+/** Section container card: roomier radius than a settings row. */
 @Composable
 internal fun SectionCard(
     modifier: Modifier = Modifier,
+    borderWidth: Dp = 0.dp,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
@@ -147,7 +148,7 @@ internal fun SectionCard(
         onClick = onClick,
         elevation = MorpheDefaults.CardElevation,
         cornerRadius = MorpheDefaults.SectionCornerRadius,
-        borderWidth = 1.dp,
+        borderWidth = borderWidth,
         modifier = modifier
     ) {
         content()
