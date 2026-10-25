@@ -100,17 +100,19 @@ internal fun SurfaceCard(
     enabled: Boolean = true,
     elevation: Dp = MorpheDefaults.CardElevation,
     cornerRadius: Dp = MorpheDefaults.CardCornerRadius,
+    shape: Shape? = null,
     borderWidth: Dp = 0.dp,
     borderColor: Color = MaterialTheme.colorScheme.outlineVariant,
     color: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
     content: @Composable () -> Unit
 ) {
+    val cardShape = shape ?: RoundedCornerShape(cornerRadius)
     if (onClick != null) {
         Surface(
             onClick = onClick,
             enabled = enabled,
             modifier = modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(cornerRadius),
+            shape = cardShape,
             color = color,
             contentColor = MaterialTheme.colorScheme.onSurface,
             tonalElevation = elevation,
@@ -122,7 +124,7 @@ internal fun SurfaceCard(
     } else {
         Surface(
             modifier = modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(cornerRadius),
+            shape = cardShape,
             color = color,
             contentColor = MaterialTheme.colorScheme.onSurface,
             tonalElevation = elevation,
@@ -152,15 +154,17 @@ internal fun SectionCard(
     }
 }
 
-/** Grouped-settings container. */
+/** Grouped-settings container: separates connected row items with a slight gap. */
 @Composable
 internal fun SettingsGroup(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    SectionCard(modifier = modifier) {
-        Column(content = content)
-    }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+        content = content
+    )
 }
 
 /** Settings item card: tighter radius and lighter elevation than a section card. */
@@ -316,29 +320,21 @@ internal fun MorpheSectionTitle(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
-            Surface(
-                modifier = Modifier.size(28.dp),
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(17.dp)
+            )
         }
         Text(
             text = text,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface
         )
     }
