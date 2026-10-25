@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -47,6 +48,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CleaningServices
@@ -57,6 +59,7 @@ import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.NetworkCheck
 import androidx.compose.material.icons.outlined.Palette
@@ -1005,6 +1008,15 @@ internal fun HelperSettingsScreen(
     var themeDialog by remember { mutableStateOf(false) }
     val locations = DownloadLocation.entries
     val policies = NetworkPolicy.entries
+    val openUrl: (String) -> Unit = remember(context) {
+        { url ->
+            runCatching {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                })
+            }
+        }
+    }
     val enabledSources = remember(settings.disabledSources) {
         DownloadSource.entries.filter { it !in settings.disabledSources }
     }
@@ -1445,13 +1457,17 @@ internal fun HelperSettingsScreen(
                             )
                         }
                         SettingsSection.UPDATES -> {
-                            UpdatesCard(
-                                updateState = updateState,
-                                onCheckForUpdates = onCheckForUpdates,
-                                onDownloadUpdate = onDownloadUpdate,
-                                onInstallUpdate = onInstallUpdate,
-                                onDismissUpdate = onDismissUpdate
-                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                UpdatesCard(
+                                    updateState = updateState,
+                                    onCheckForUpdates = onCheckForUpdates,
+                                    onDownloadUpdate = onDownloadUpdate,
+                                    onInstallUpdate = onInstallUpdate,
+                                    onDismissUpdate = onDismissUpdate,
+                                    position = ConnectedPosition.First
+                                )
+                                AboutRows(onOpenUrl = openUrl)
+                            }
                         }
                     }
                 }
@@ -1715,8 +1731,10 @@ internal fun HelperSettingsScreen(
                         onCheckForUpdates = onCheckForUpdates,
                         onDownloadUpdate = onDownloadUpdate,
                         onInstallUpdate = onInstallUpdate,
-                        onDismissUpdate = onDismissUpdate
+                        onDismissUpdate = onDismissUpdate,
+                        position = ConnectedPosition.First
                     )
+                    AboutRows(onOpenUrl = openUrl)
                 }
             }
         }
@@ -1898,12 +1916,13 @@ private fun UpdatesCard(
     onCheckForUpdates: () -> Unit,
     onDownloadUpdate: (UpdateInfo) -> Unit,
     onInstallUpdate: (File) -> Unit,
-    onDismissUpdate: () -> Unit
+    onDismissUpdate: () -> Unit,
+    position: ConnectedPosition = ConnectedPosition.Single
 ) {
     val colors = MaterialTheme.colorScheme
     SurfaceCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = connectedCardShape(ConnectedPosition.Single),
+        shape = connectedCardShape(position),
         color = colors.surfaceColorAtElevation(3.dp)
     ) {
         Column(
@@ -2197,5 +2216,54 @@ private fun UpdatesCard(
             }
         }
     }
+}
+
+@Composable
+private fun AboutRows(onOpenUrl: (String) -> Unit) {
+    SettingsRow(
+        icon = Icons.Outlined.AccountCircle,
+        title = "Developer",
+        subtitle = "FarhanZafarr-9",
+        trailing = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
+                contentDescription = "Open link",
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        position = ConnectedPosition.Middle,
+        onClick = { onOpenUrl("https://github.com/FarhanZafarr-9") }
+    )
+    SettingsRow(
+        icon = Icons.Outlined.FolderOpen,
+        title = "Fork Repository",
+        subtitle = "FarhanZafarr-9/morphe-fetch",
+        trailing = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
+                contentDescription = "Open link",
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        position = ConnectedPosition.Middle,
+        onClick = { onOpenUrl("https://github.com/FarhanZafarr-9/morphe-fetch") }
+    )
+    SettingsRow(
+        icon = Icons.Outlined.Info,
+        title = "Original Repository",
+        subtitle = "Akash-Sriram/morphe-fetch",
+        trailing = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
+                contentDescription = "Open link",
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        position = ConnectedPosition.Last,
+        onClick = { onOpenUrl("https://github.com/Akash-Sriram/morphe-fetch") }
+    )
 }
 
