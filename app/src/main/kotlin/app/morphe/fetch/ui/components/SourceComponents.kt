@@ -1051,21 +1051,45 @@ internal fun CandidateResolveSection(
         }
 
         is ResolveState.Error -> {
-            InfoCard(state.message)
-            state.fallbackCandidate?.let { candidate ->
+            val fallback = state.fallbackCandidate
+            if (fallback != null) {
+                val candidateWithNote = if (fallback.note.isNullOrBlank()) {
+                    fallback.copy(note = state.message)
+                } else {
+                    fallback.copy(note = "${state.message}\n\n${fallback.note}")
+                }
                 CandidateCard(
                     request = request,
-                    candidate = candidate,
-                    onDownload = { onDownload(candidate) },
-                    onPickDownloadedFile = { onPickDownloadedFile(candidate) },
-                    onUseInstalledApp = { onUseInstalledApp(candidate) },
-                    onSolveCaptcha = { onSolveCaptcha(candidate) },
+                    candidate = candidateWithNote,
+                    onDownload = { onDownload(fallback) },
+                    onPickDownloadedFile = { onPickDownloadedFile(fallback) },
+                    onUseInstalledApp = { onUseInstalledApp(fallback) },
+                    onSolveCaptcha = { onSolveCaptcha(fallback) },
                     installedPackageRefreshToken = installedPackageRefreshToken,
                     onToggleVersions = onToggleVersions,
                     isVersionsOpen = isVersionsOpen,
                     onOpenSite = onOpenSite,
                     extraContent = extraContent
                 )
+            } else {
+                SurfaceCard(
+                    cornerRadius = 14.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        extraContent?.invoke(this)
+                    }
+                }
             }
         }
     }
