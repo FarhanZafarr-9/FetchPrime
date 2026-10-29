@@ -23,6 +23,16 @@ A refined fork of [`morphe-fetch`](https://github.com/Akash-Sriram/morphe-fetch)
 
 ---
 
+## Install alongside the original
+
+Starting with FetchPrime **1.5.3**, my application ID is **`app.morphe.fetchprime`**. The original uses `app.morphe.fetch`, so both can be installed together. Download the signed APK from [my releases](https://github.com/FarhanZafarr-9/FetchPrime/releases/latest).
+
+This is a separate installation with its own settings, history, and permissions. FetchPrime 1.5.2 used the original package name; install 1.5.3 separately instead of using that older build's in-app updater, which correctly rejects APKs with a different package name. You can keep the old installation until you have set up the new one.
+
+The permanent FetchPrime signing key is unchanged. Future updates to `app.morphe.fetchprime` will use the same key.
+
+---
+
 ## Key Features
 
 - **Multi-Source Parallel Resolution** — Concurrently queries all enabled sources (Google Play via Aurora, APKMirror, APKPure, and Uptodown) to fetch recommended architectures and compatible versions without manual hunting.
