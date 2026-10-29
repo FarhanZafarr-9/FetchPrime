@@ -44,7 +44,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "app.morphe.fetch"
+        applicationId = "app.morphe.fetchprime"
         minSdk = 26
         targetSdk = 36
         versionCode = helperVersionCode.get()
