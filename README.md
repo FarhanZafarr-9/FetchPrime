@@ -1,8 +1,8 @@
 # FetchPrime 📦
 
-[![Latest Release](https://img.shields.io/github/v/release/FarhanZafarr-9/morphe-fetch?include_prereleases&color=007AFF&style=flat-square)](https://github.com/FarhanZafarr-9/morphe-fetch/releases/latest)
+[![Latest Release](https://img.shields.io/github/v/release/FarhanZafarr-9/FetchPrime?include_prereleases&color=007AFF&style=flat-square)](https://github.com/FarhanZafarr-9/FetchPrime/releases/latest)
 [![Android](https://img.shields.io/badge/Android-8.0%2B%20(API%2026%2B)-3DDC84?style=flat-square&logo=android&logoColor=white)](https://developer.android.com)
-[![License](https://img.shields.io/github/license/FarhanZafarr-9/morphe-fetch?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/github/license/FarhanZafarr-9/FetchPrime?style=flat-square)](LICENSE)
 
 Fast, modern Android companion downloader for [Morphe Manager](https://github.com/MorpheApp/morphe-manager) and standalone APK retriever — reimagined with an overhauled connected UI and enhanced resolver experience.
 
