@@ -23,6 +23,112 @@ A refined fork of [`morphe-fetch`](https://github.com/Akash-Sriram/morphe-fetch)
 
 ---
 
+## Before and after
+
+I reworked the interface to suit my own preferences; these comparisons are not a critique of the original design. The original project and its contributors retain credit for the downloader and its foundations.
+
+Each pair shows Morphe Fetch on the left and FetchPrime on the right. These are interface comparisons taken at different times; displayed sources, results, counts, and switch states may differ.
+
+### Settings
+
+Settings organization, theme selection, connected rows, and updates/about information.
+
+| Morphe Fetch — original | FetchPrime — my rework |
+| --- | --- |
+| <img src="docs/Screenshots/old.jpg" width="280" alt="Original Morphe Fetch: Settings"> | <img src="docs/Screenshots/new.jpg" width="280" alt="FetchPrime rework: Settings"> |
+
+<details>
+<summary>Download sources</summary>
+
+Download-source controls, expanded source options, and source selection actions.
+
+| Morphe Fetch — original | FetchPrime — my rework |
+| --- | --- |
+| <img src="docs/Screenshots/old%20%282%29.jpg" width="280" alt="Original Morphe Fetch: Download sources"> | <img src="docs/Screenshots/new%20%282%29.jpg" width="280" alt="FetchPrime rework: Download sources"> |
+
+</details>
+
+<details>
+<summary>Search results and download candidates</summary>
+
+Candidate cards with download, version history, and source-site actions.
+
+| Morphe Fetch — original | FetchPrime — my rework |
+| --- | --- |
+| <img src="docs/Screenshots/old%20%283%29.jpg" width="280" alt="Original Morphe Fetch: Search results and download candidates"> | <img src="docs/Screenshots/new%20%283%29.jpg" width="280" alt="FetchPrime rework: Search results and download candidates"> |
+
+</details>
+
+<details>
+<summary>Download complete</summary>
+
+The completion screen with actions for Morphe, installation, sharing, and finishing.
+
+| Morphe Fetch — original | FetchPrime — my rework |
+| --- | --- |
+| <img src="docs/Screenshots/old%20%284%29.jpg" width="280" alt="Original Morphe Fetch: Download complete"> | <img src="docs/Screenshots/new%20%284%29.jpg" width="280" alt="FetchPrime rework: Download complete"> |
+
+</details>
+
+<details>
+<summary>Search and download history</summary>
+
+The home search field and saved-download cards.
+
+| Morphe Fetch — original | FetchPrime — my rework |
+| --- | --- |
+| <img src="docs/Screenshots/old%20%285%29.jpg" width="280" alt="Original Morphe Fetch: Search and download history"> | <img src="docs/Screenshots/new%20%285%29.jpg" width="280" alt="FetchPrime rework: Search and download history"> |
+
+</details>
+
+<details>
+<summary>Find New Apps</summary>
+
+App browsing with search, filtering, sorting, and connected app rows.
+
+| Morphe Fetch — original | FetchPrime — my rework |
+| --- | --- |
+| <img src="docs/Screenshots/old%20%286%29.jpg" width="280" alt="Original Morphe Fetch: Find New Apps"> | <img src="docs/Screenshots/new%20%286%29.jpg" width="280" alt="FetchPrime rework: Find New Apps"> |
+
+</details>
+
+<details>
+<summary>Patch bundles</summary>
+
+Bundle browsing with patch counts, compatible app counts, and repository actions.
+
+| Morphe Fetch — original | FetchPrime — my rework |
+| --- | --- |
+| <img src="docs/Screenshots/old%20%287%29.jpg" width="280" alt="Original Morphe Fetch: Patch bundles"> | <img src="docs/Screenshots/new%20%287%29.jpg" width="280" alt="FetchPrime rework: Patch bundles"> |
+
+</details>
+
+<details>
+<summary>Expanded bundle details</summary>
+
+Compatible apps grouped inside an expanded bundle card.
+
+| Morphe Fetch — original | FetchPrime — my rework |
+| --- | --- |
+| <img src="docs/Screenshots/old%20%288%29.jpg" width="280" alt="Original Morphe Fetch: Expanded bundle details"> | <img src="docs/Screenshots/new%20%288%29.jpg" width="280" alt="FetchPrime rework: Expanded bundle details"> |
+
+</details>
+
+<details>
+<summary>App and patch details</summary>
+
+The app details screen and connected patch-description rows.
+
+| Morphe Fetch — original | FetchPrime — my rework |
+| --- | --- |
+| <img src="docs/Screenshots/old%20%289%29.jpg" width="280" alt="Original Morphe Fetch: App and patch details"> | <img src="docs/Screenshots/new%20%289%29.jpg" width="280" alt="FetchPrime rework: App and patch details"> |
+
+</details>
+
+[View all original screenshot files](docs/Screenshots).
+
+---
+
 ## Install alongside the original
 
 Starting with FetchPrime **1.5.3**, my application ID is **`app.morphe.fetchprime`**. The original uses `app.morphe.fetch`, so both can be installed together. Download the signed APK from [my releases](https://github.com/FarhanZafarr-9/FetchPrime/releases/latest).
