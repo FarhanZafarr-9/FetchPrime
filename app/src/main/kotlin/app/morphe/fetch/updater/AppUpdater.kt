@@ -70,15 +70,15 @@ internal class AppUpdater(
         .followRedirects(true)
         .build(),
     private val gson: Gson = Gson(),
-    private val repoOwner: String = "Akash-Sriram",
-    private val repoName: String = "morphe-fetch"
+    private val repoOwner: String = "FarhanZafarr-9",
+    private val repoName: String = "FetchPrime"
 ) {
     suspend fun checkForUpdates(currentVersion: String): UpdateInfo = withContext(Dispatchers.IO) {
         val url = "https://api.github.com/repos/$repoOwner/$repoName/releases/latest"
         val request = Request.Builder()
             .url(url)
             .header("Accept", "application/vnd.github.v3+json")
-            .header("User-Agent", "MorpheFetch-Updater")
+            .header("User-Agent", "FetchPrime-Updater")
             .build()
 
         val response = client.newCall(request).execute()
@@ -112,7 +112,7 @@ internal class AppUpdater(
         onProgress: (progress: Float, copied: Long, total: Long) -> Unit
     ): File = withContext(Dispatchers.IO) {
         val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
-        val targetFile = File(updatesDir, "morphe-fetch-${info.tagName}.apk")
+        val targetFile = File(updatesDir, "FetchPrime-${info.tagName}.apk")
 
         if (targetFile.exists() && targetFile.length() == info.apkSize && info.apkSize > 0) {
             if (validateApkArchive(targetFile, info.apkSize) == null) {
