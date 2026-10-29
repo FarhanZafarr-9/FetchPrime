@@ -4,22 +4,31 @@
 [![Android](https://img.shields.io/badge/Android-8.0%2B%20(API%2026%2B)-3DDC84?style=flat-square&logo=android&logoColor=white)](https://developer.android.com)
 [![License](https://img.shields.io/github/license/FarhanZafarr-9/FetchPrime?style=flat-square)](LICENSE)
 
-Fast, modern Android companion downloader for [Morphe Manager](https://github.com/MorpheApp/morphe-manager) and standalone APK retriever — reimagined with an overhauled connected UI and enhanced resolver experience.
+I made FetchPrime as a personal UI rework of [morphe-fetch](https://github.com/Akash-Sriram/morphe-fetch), an Android download companion for [Morphe Manager](https://github.com/MorpheApp/morphe-manager) that can also find APKs on its own.
 
-A refined fork of [`morphe-fetch`](https://github.com/Akash-Sriram/morphe-fetch) by [Akash Sriram](https://github.com/Akash-Sriram) (originally [`helper-for-morphe`](https://github.com/rushiranpise/helper-for-morphe) by [Rushi Ranpise](https://github.com/rushiranpise)), maintained and evolved by [Farhan Zafar](https://github.com/FarhanZafarr-9).
+The project I forked is by [Akash Sriram](https://github.com/Akash-Sriram), and its original foundation is [helper-for-morphe](https://github.com/rushiranpise/helper-for-morphe) by [Rushi Ranpise](https://github.com/rushiranpise). I do not claim credit for their downloader, integrations, or the work contributed by the upstream authors and community. My contribution is the interface rework and the fork-specific changes described below.
 
----
+## Why I made this
 
-## ✨ What's Different in This Fork (FetchPrime)
+I enjoy working on interfaces, and I wanted to try a layout that fits my own taste: connected rows, softer shapes, fewer outlines, and actions grouped with the content they belong to.
 
-- **Connected Card UI System** — Redesigned list items and setting groups using cohesive connected card geometry (`Single`, `First`, `Middle`, `Last`) with tight `3.dp` spacing across all screens.
-- **Borderless, Elevated Aesthetics** — Replaced flat hard borders with subtle, elevated `surfaceVariant` cards, clean search fields, and borderless dialog surfaces.
-- **Pill & Circle Action Geometries** — All touch actions modernized with tactile pill buttons, uniform 44.dp heights, and circular icon controls.
-- **Nested In-Card Version History** — Version history and manual fallback actions are embedded directly inside candidate and empty-state cards rather than floating externally.
-- **Smart Version Discovery** — Automatically queries available version history when an initial search yields no direct APK match; dynamically expands single actions to full width.
-- **Embedded Challenge & Error Cards** — Cloudflare Turnstile verification notices, HTTP 403 blocks, and network errors are hosted inside candidate cards alongside unified action buttons.
-- **Markdown Changelog Renderer** — In-app update dialog parses and displays GitHub release notes with rich Markdown formatting (headers, bullet lists, fenced code blocks).
-- **Cleaned Navigation & Lists** — Removed intrusive vertical scrollbars, added instant developer and repository info rows in Settings, and polished tablet two-pane layouts.
+This is not a critique of the original UI. Everyone has different preferences, and an interface I enjoy may not be the one someone else prefers. I appreciate the original work that made this possible; I am sharing my take for anyone who likes this style too.
+
+## What I changed
+
+I focused on the settings, browsing, and download screens:
+
+- **Connected rows and cards:** I grouped related options with small gaps and rounded outer corners across settings, app lists, and bundle details.
+- **Filled surfaces:** I replaced many outlines with tonal backgrounds in search fields, dialogs, cards, and controls.
+- **Buttons and actions:** I used pill-shaped buttons and circular controls, keeping download, history, and source-site actions together inside their cards.
+- **Version history and fallback states:** I brought version lists, manual fallback actions, and verification or error notices into the relevant source card. I also adjusted version discovery when a search has no direct match.
+- **Settings and updates:** I reorganized the settings rows, added fork information, and made the update dialog display formatted release notes.
+- **Navigation and larger screens:** I adjusted list presentation and the two-pane layout, with fewer visual separators and no visible list scrollbars.
+- **Branding and coexistence:** I added the FetchPrime name and artwork, pointed the updater at my releases, and gave the app its own package so it can sit alongside the original.
+
+## Updates and maintenance
+
+I work on this out of personal interest and in my available time. Keeping the rework aligned with upstream changes takes testing and maintenance, so my releases may sometimes lag behind. If you need the latest upstream fixes promptly, please use [the original morphe-fetch project](https://github.com/Akash-Sriram/morphe-fetch).
 
 ---
 
@@ -139,7 +148,9 @@ The permanent FetchPrime signing key is unchanged. Future updates to `app.morphe
 
 ---
 
-## Key Features
+## Features I carry over from upstream
+
+The downloader and its integrations come from the projects this fork builds on. I have kept those capabilities available behind my reworked interface:
 
 - **Multi-Source Parallel Resolution** — Concurrently queries all enabled sources (Google Play via Aurora, APKMirror, APKPure, and Uptodown) to fetch recommended architectures and compatible versions without manual hunting.
 - **Find New Apps (Archive Explorer)** — Built-in catalog of 100+ patchable applications and community repositories. Includes live GitHub catalog sync, offline fallback, favourites bookmarking, and smart installed/patched app status detection.
@@ -163,11 +174,15 @@ The permanent FetchPrime signing key is unchanged. Future updates to `app.morphe
 
 ---
 
-## Credits & Upstream
+## Credits and upstream
 
-- **Author / Maintainer**: [Farhan Zafar](https://github.com/FarhanZafarr-9)
-- **Forked From**: [Akash-Sriram/morphe-fetch](https://github.com/Akash-Sriram/morphe-fetch)
-- **Original Project**: [`helper-for-morphe`](https://github.com/rushiranpise/helper-for-morphe) by [Rushi Ranpise](https://github.com/rushiranpise)
+I maintain this UI fork as [FarhanZafarr-9](https://github.com/FarhanZafarr-9). Credit for the original downloader and its foundations belongs to the upstream authors and contributors:
+
+- [Akash Sriram's morphe-fetch](https://github.com/Akash-Sriram/morphe-fetch), the project I forked.
+- [Rushi Ranpise's helper-for-morphe](https://github.com/rushiranpise/helper-for-morphe), the original project it builds on.
+- The contributors and libraries credited by those projects.
+
+I chose a separate name to identify my version. It does not imply that the original authors endorse my changes. I retain the upstream license and attribution.
 
 ---
 
