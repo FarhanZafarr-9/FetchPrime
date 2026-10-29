@@ -2238,7 +2238,7 @@ private fun AboutRows(onOpenUrl: (String) -> Unit) {
     SettingsRow(
         icon = Icons.Outlined.FolderOpen,
         title = "Fork Repository",
-        subtitle = "FarhanZafarr-9/morphe-fetch",
+        subtitle = "FarhanZafarr-9/FetchPrime",
         trailing = {
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
@@ -2248,7 +2248,7 @@ private fun AboutRows(onOpenUrl: (String) -> Unit) {
             )
         },
         position = ConnectedPosition.Middle,
-        onClick = { onOpenUrl("https://github.com/FarhanZafarr-9/morphe-fetch") }
+        onClick = { onOpenUrl("https://github.com/FarhanZafarr-9/FetchPrime") }
     )
     SettingsRow(
         icon = Icons.Outlined.Info,
