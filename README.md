@@ -1,3 +1,5 @@
+<img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" width="96" height="96" alt="FetchPrime app icon">
+
 # FetchPrime 📦
 
 [![Latest Release](https://img.shields.io/github/v/release/FarhanZafarr-9/FetchPrime?include_prereleases&color=007AFF&style=flat-square)](https://github.com/FarhanZafarr-9/FetchPrime/releases/latest)
@@ -46,8 +48,7 @@ Settings organization, theme selection, connected rows, and updates/about inform
 | --- | --- |
 | <img src="docs/Screenshots/old.jpg" width="280" alt="Original Morphe Fetch: Settings"> | <img src="docs/Screenshots/new.jpg" width="280" alt="FetchPrime rework: Settings"> |
 
-<details>
-<summary>Download sources</summary>
+### Download sources
 
 Download-source controls, expanded source options, and source selection actions.
 
@@ -55,10 +56,7 @@ Download-source controls, expanded source options, and source selection actions.
 | --- | --- |
 | <img src="docs/Screenshots/old%20%282%29.jpg" width="280" alt="Original Morphe Fetch: Download sources"> | <img src="docs/Screenshots/new%20%282%29.jpg" width="280" alt="FetchPrime rework: Download sources"> |
 
-</details>
-
-<details>
-<summary>Search results and download candidates</summary>
+### Search results and download candidates
 
 Candidate cards with download, version history, and source-site actions.
 
@@ -66,10 +64,7 @@ Candidate cards with download, version history, and source-site actions.
 | --- | --- |
 | <img src="docs/Screenshots/old%20%283%29.jpg" width="280" alt="Original Morphe Fetch: Search results and download candidates"> | <img src="docs/Screenshots/new%20%283%29.jpg" width="280" alt="FetchPrime rework: Search results and download candidates"> |
 
-</details>
-
-<details>
-<summary>Download complete</summary>
+### Download complete
 
 The completion screen with actions for Morphe, installation, sharing, and finishing.
 
@@ -77,10 +72,7 @@ The completion screen with actions for Morphe, installation, sharing, and finish
 | --- | --- |
 | <img src="docs/Screenshots/old%20%284%29.jpg" width="280" alt="Original Morphe Fetch: Download complete"> | <img src="docs/Screenshots/new%20%284%29.jpg" width="280" alt="FetchPrime rework: Download complete"> |
 
-</details>
-
-<details>
-<summary>Search and download history</summary>
+### Search and download history
 
 The home search field and saved-download cards.
 
@@ -88,10 +80,7 @@ The home search field and saved-download cards.
 | --- | --- |
 | <img src="docs/Screenshots/old%20%285%29.jpg" width="280" alt="Original Morphe Fetch: Search and download history"> | <img src="docs/Screenshots/new%20%285%29.jpg" width="280" alt="FetchPrime rework: Search and download history"> |
 
-</details>
-
-<details>
-<summary>Find New Apps</summary>
+### Find New Apps
 
 App browsing with search, filtering, sorting, and connected app rows.
 
@@ -99,10 +88,7 @@ App browsing with search, filtering, sorting, and connected app rows.
 | --- | --- |
 | <img src="docs/Screenshots/old%20%286%29.jpg" width="280" alt="Original Morphe Fetch: Find New Apps"> | <img src="docs/Screenshots/new%20%286%29.jpg" width="280" alt="FetchPrime rework: Find New Apps"> |
 
-</details>
-
-<details>
-<summary>Patch bundles</summary>
+### Patch bundles
 
 Bundle browsing with patch counts, compatible app counts, and repository actions.
 
@@ -110,10 +96,7 @@ Bundle browsing with patch counts, compatible app counts, and repository actions
 | --- | --- |
 | <img src="docs/Screenshots/old%20%287%29.jpg" width="280" alt="Original Morphe Fetch: Patch bundles"> | <img src="docs/Screenshots/new%20%287%29.jpg" width="280" alt="FetchPrime rework: Patch bundles"> |
 
-</details>
-
-<details>
-<summary>Expanded bundle details</summary>
+### Expanded bundle details
 
 Compatible apps grouped inside an expanded bundle card.
 
@@ -121,18 +104,13 @@ Compatible apps grouped inside an expanded bundle card.
 | --- | --- |
 | <img src="docs/Screenshots/old%20%288%29.jpg" width="280" alt="Original Morphe Fetch: Expanded bundle details"> | <img src="docs/Screenshots/new%20%288%29.jpg" width="280" alt="FetchPrime rework: Expanded bundle details"> |
 
-</details>
-
-<details>
-<summary>App and patch details</summary>
+### App and patch details
 
 The app details screen and connected patch-description rows.
 
 | Morphe Fetch — original | FetchPrime — my rework |
 | --- | --- |
 | <img src="docs/Screenshots/old%20%289%29.jpg" width="280" alt="Original Morphe Fetch: App and patch details"> | <img src="docs/Screenshots/new%20%289%29.jpg" width="280" alt="FetchPrime rework: App and patch details"> |
-
-</details>
 
 [View all original screenshot files](docs/Screenshots).
 
