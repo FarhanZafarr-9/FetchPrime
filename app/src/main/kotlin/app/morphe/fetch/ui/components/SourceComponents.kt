@@ -93,12 +93,7 @@ internal fun SourcePickerFlow(
     }
 
     val maxPage = groups.size
-    val initialPage = selectedPagerPage.coerceIn(0, maxPage)
-    var currentPage by rememberSaveable { mutableIntStateOf(initialPage) }
-    androidx.compose.runtime.LaunchedEffect(selectedPagerPage) {
-        currentPage = selectedPagerPage.coerceIn(0, maxPage)
-    }
-    SideEffect { onPagerPageChanged(currentPage) }
+    val currentPage = selectedPagerPage.coerceIn(0, maxPage)
 
     val currentGroup = if (currentPage > 0) groups[(currentPage - 1).coerceIn(0, groups.lastIndex)] else null
 
@@ -118,7 +113,7 @@ internal fun SourcePickerFlow(
             buildAllSourcesPrimaryAction(
                 groups = groups,
                 onResolveAll = {
-                    groups.forEach { group ->
+                    groups.sortedForDisplay(request).forEach { group ->
                         val targetOption = if (group.source.supportsRecommended && request.hasRequestedVersionRequest) {
                             CandidateOption.REQUESTED
                         } else {
@@ -137,7 +132,7 @@ internal fun SourcePickerFlow(
         SourceChipRow(
             groups = groups,
             selectedIndex = currentPage,
-            onSelect = { currentPage = it }
+            onSelect = onPagerPageChanged
         )
 
         // Focused content
@@ -221,7 +216,7 @@ internal fun SourceChipRow(
                     Text(
                         text = "All Sources",
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                        fontWeight = FontWeight.Medium
                     )
                     if (anyHasCandidate) {
                         Icon(
@@ -230,6 +225,8 @@ internal fun SourceChipRow(
                             tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(15.dp)
                         )
+                    } else {
+                        Spacer(Modifier.size(15.dp))
                     }
                 }
             }
@@ -268,7 +265,7 @@ internal fun SourceChipRow(
                     Text(
                         text = group.source.label,
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                        fontWeight = FontWeight.Medium
                     )
                     if (hasCandidate) {
                         Icon(
@@ -277,6 +274,8 @@ internal fun SourceChipRow(
                             tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(15.dp)
                         )
+                    } else {
+                        Spacer(Modifier.size(15.dp))
                     }
                 }
             }
@@ -311,40 +310,8 @@ internal fun buildAllSourcesPrimaryAction(
     return null
 }
 
-internal fun List<SourceCandidateGroup>.sortedForDisplay(request: HelperRequest): List<SourceCandidateGroup> {
-    return sortedWith(
-        compareBy<SourceCandidateGroup> { it.sortPriority(request) }
-            .thenBy { it.source.sortIndex }
-    )
-}
-
-internal fun SourceCandidateGroup.sortPriority(request: HelperRequest): Int {
-    val targetOption = if (source.supportsRecommended && request.hasRequestedVersionRequest) {
-        CandidateOption.REQUESTED
-    } else {
-        CandidateOption.LATEST
-    }
-    val primaryState = if (targetOption == CandidateOption.REQUESTED) recommended else latest
-    val primaryCandidates = (primaryState as? ResolveState.Done)?.candidates.orEmpty()
-    val otherCandidates = (latest as? ResolveState.Done)?.candidates.orEmpty()
-
-    return when {
-        // Provider has actual direct download APK for requested target
-        primaryCandidates.any { it.directDownload } -> 0
-        // Provider has candidates for requested target
-        primaryCandidates.isNotEmpty() -> 1
-        // Fallback: provider has direct APK for latest version
-        targetOption == CandidateOption.REQUESTED && otherCandidates.any { it.directDownload } -> 2
-        // Fallback: provider has any candidates for latest version
-        targetOption == CandidateOption.REQUESTED && otherCandidates.isNotEmpty() -> 3
-        // Provider is currently searching/loading
-        primaryState is ResolveState.Loading || (targetOption == CandidateOption.REQUESTED && latest is ResolveState.Loading) -> 4
-        // Provider is idle
-        primaryState is ResolveState.Idle -> 5
-        // No APKs found or error
-        else -> 6
-    }
-}
+// Preserve configured source order while asynchronous results arrive.
+internal fun List<SourceCandidateGroup>.sortedForDisplay(@Suppress("UNUSED_PARAMETER") request: HelperRequest): List<SourceCandidateGroup> = this
 
 @Composable
 internal fun AllSourcesPageContent(
@@ -359,12 +326,8 @@ internal fun AllSourcesPageContent(
     onDownloadVersion: (DownloadCandidate) -> Unit,
     installedPackageRefreshToken: Int
 ) {
-    val sortedGroups = remember(groups, request.hasRequestedVersionRequest) {
-        groups.sortedForDisplay(request)
-    }
-
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        sortedGroups.forEach { group ->
+        groups.sortedForDisplay(request).forEach { group ->
             key(group.source) {
                 SourceSectionCard(
                     request = request,
@@ -471,7 +434,7 @@ internal fun SourcePageContent(
     onDownloadVersion: (DownloadCandidate) -> Unit,
     installedPackageRefreshToken: Int
 ) {
-    var showHistory by rememberSaveable(group.source) { mutableStateOf(false) }
+    var showHistory by rememberSaveable(request, group.source) { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         val targetOption = if (group.source.supportsRecommended && request.hasRequestedVersionRequest) {
@@ -488,9 +451,10 @@ internal fun SourcePageContent(
         val manual = group.manual.firstOrNull()
         val onOpenSite: (() -> Unit)? = if (manual != null) { { onSolveCaptcha(manual) } } else null
 
-        // Auto-check version history when no APKs are found for this source
+        // Keep fallback history in the same source section, including source errors.
         LaunchedEffect(candidateState, group.source) {
-            if (candidateState is ResolveState.Done && candidateState.candidates.isEmpty() && group.source.supportsHistory) {
+            if ((candidateState is ResolveState.Done && candidateState.candidates.isEmpty() ||
+                    candidateState is ResolveState.Error) && group.source.supportsHistory) {
                 showHistory = true
                 if (group.history is VersionHistoryState.Idle) {
                     onVersionHistory(group.source)
@@ -1032,7 +996,7 @@ internal fun CandidateResolveSection(
                     }
                 }
             } else {
-                state.candidates.forEach { candidate ->
+                val candidate = state.candidates.first()
                     CandidateCard(
                         request = request,
                         candidate = candidate,
@@ -1044,9 +1008,18 @@ internal fun CandidateResolveSection(
                         onToggleVersions = onToggleVersions,
                         isVersionsOpen = isVersionsOpen,
                         onOpenSite = onOpenSite,
-                        extraContent = extraContent
+                        extraContent = {
+                            if (state.candidates.size > 1) {
+                                VersionHistorySection(
+                                    source = group.source,
+                                    state = VersionHistoryState.Done(state.candidates.drop(1)),
+                                    onDownloadVersion = onDownload,
+                                    onSolveCaptcha = onSolveCaptcha
+                                )
+                            }
+                            extraContent?.invoke(this)
+                        }
                     )
-                }
             }
         }
 
@@ -1087,6 +1060,32 @@ internal fun CandidateResolveSection(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (onToggleVersions != null) {
+                                Surface(
+                                    shape = RoundedCornerShape(50),
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    onClick = onToggleVersions
+                                ) {
+                                    Text(
+                                        text = if (isVersionsOpen) "Hide versions" else "Versions",
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                onClick = onSearch
+                            ) {
+                                Text(
+                                    text = "Retry",
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
+                        }
                         extraContent?.invoke(this)
                     }
                 }

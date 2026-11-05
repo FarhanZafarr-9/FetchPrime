@@ -46,8 +46,12 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.InstallMobile
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Smartphone
@@ -62,12 +66,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -127,6 +134,7 @@ internal fun HelperScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var historyEntries by remember { mutableStateOf<List<DownloadHistoryEntry>>(emptyList()) }
+    var historyExpanded by rememberSaveable { mutableStateOf(false) }
     val refreshHistory: () -> Unit = {
         scope.launch(Dispatchers.IO) {
             val entries = DownloadHistoryStore.entries(context)
@@ -310,19 +318,21 @@ internal fun HelperScreen(
                                     .weight(0.58f)
                                     .fillMaxHeight(),
                                 contentPadding = PaddingValues(bottom = 32.dp),
-                                horizontalArrangement = Arrangement.spacedBy(MorpheDefaults.ItemSpacing),
-                                verticalArrangement = Arrangement.spacedBy(MorpheDefaults.ItemSpacing)
+                                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
                                 item(span = { GridItemSpan(maxLineSpan) }) {
-                                    MorpheSectionTitle(
-                                        text = "Downloaded APKs (${historyEntries.size})",
-                                        icon = Icons.Outlined.History
+                                    DownloadHistoryToggleRow(
+                                        count = historyEntries.size,
+                                        expanded = historyExpanded,
+                                        onToggle = { historyExpanded = !historyExpanded }
                                     )
                                 }
-                                if (historyEntries.isNotEmpty()) {
+                                if (historyExpanded && historyEntries.isNotEmpty()) {
                                     items(historyEntries, key = { "${it.fileName}_${it.timestamp}" }) { entry ->
                                         CachedAppCard(
                                             entry = entry,
+                                            position = if (entry == historyEntries.last()) ConnectedPosition.Last else ConnectedPosition.Middle,
                                             onInstall = {
                                                 runCatching {
                                                     val uri = Uri.parse(entry.uri)
@@ -356,7 +366,7 @@ internal fun HelperScreen(
                                             }
                                         )
                                     }
-                                } else {
+                                } else if (historyExpanded) {
                                     item(span = { GridItemSpan(maxLineSpan) }) {
                                         SurfaceCard(
                                             modifier = Modifier.fillMaxWidth(),
@@ -624,46 +634,52 @@ internal fun HelperScreen(
                             }
                             if (historyEntries.isNotEmpty()) {
                                 item {
-                                    MorpheSectionTitle(
-                                        text = "Downloaded APKs (${historyEntries.size})",
-                                        icon = Icons.Outlined.History
-                                    )
-                                }
-                                items(historyEntries, key = { "${it.fileName}_${it.timestamp}" }) { entry ->
-                                    CachedAppCard(
-                                        entry = entry,
-                                        onInstall = {
-                                            runCatching {
-                                                val uri = Uri.parse(entry.uri)
-                                                val installIntent = Intent(Intent.ACTION_VIEW).apply {
-                                                    setDataAndType(uri, fileNameMimeType(entry.fileName))
-                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-                                                }
-                                                context.startActivity(installIntent)
-                                            }
-                                        },
-                                        onSendToMorphe = {
-                                            onSendApkToMorphe(entry)
-                                        },
-                                        onShare = {
-                                            runCatching {
-                                                val uri = Uri.parse(entry.uri)
-                                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                                    type = fileNameMimeType(entry.fileName)
-                                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                }
-                                                context.startActivity(Intent.createChooser(shareIntent, "Share APK"))
-                                            }
-                                        },
-                                        onSearchAgain = { onSearchPackage(entry.packageName, null) },
-                                        onRemove = {
-                                            scope.launch(Dispatchers.IO) {
-                                                DownloadHistoryStore.remove(context, entry)
-                                                refreshHistory()
+                                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                        DownloadHistoryToggleRow(
+                                            count = historyEntries.size,
+                                            expanded = historyExpanded,
+                                            onToggle = { historyExpanded = !historyExpanded }
+                                        )
+                                        if (historyExpanded) {
+                                            historyEntries.forEach { entry ->
+                                                CachedAppCard(
+                                                    entry = entry,
+                                                    position = if (entry == historyEntries.last()) ConnectedPosition.Last else ConnectedPosition.Middle,
+                                                    onInstall = {
+                                                        runCatching {
+                                                            val uri = Uri.parse(entry.uri)
+                                                            val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                                                                setDataAndType(uri, fileNameMimeType(entry.fileName))
+                                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                            }
+                                                            context.startActivity(installIntent)
+                                                        }
+                                                    },
+                                                    onSendToMorphe = {
+                                                        onSendApkToMorphe(entry)
+                                                    },
+                                                    onShare = {
+                                                        runCatching {
+                                                            val uri = Uri.parse(entry.uri)
+                                                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                                                type = fileNameMimeType(entry.fileName)
+                                                                putExtra(Intent.EXTRA_STREAM, uri)
+                                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                            }
+                                                            context.startActivity(Intent.createChooser(shareIntent, "Share APK"))
+                                                        }
+                                                    },
+                                                    onSearchAgain = { onSearchPackage(entry.packageName, null) },
+                                                    onRemove = {
+                                                        scope.launch(Dispatchers.IO) {
+                                                            DownloadHistoryStore.remove(context, entry)
+                                                            refreshHistory()
+                                                        }
+                                                    }
+                                                )
                                             }
                                         }
-                                    )
+                                    }
                                 }
                             }
                             return@LazyColumn
@@ -823,6 +839,27 @@ internal fun HelperScreen(
             }
         }
     }
+}
+
+@Composable
+private fun DownloadHistoryToggleRow(count: Int, expanded: Boolean, onToggle: () -> Unit) {
+    SettingsRow(
+        modifier = Modifier.fillMaxWidth().semantics {
+            stateDescription = if (expanded) "Expanded" else "Collapsed"
+        },
+        icon = Icons.Outlined.History,
+        position = if (expanded) ConnectedPosition.First else ConnectedPosition.Single,
+        title = "Downloaded APKs ($count)",
+        subtitle = if (expanded) "Tap to collapse history" else "Tap to show history",
+        onClick = onToggle,
+        trailing = {
+            Icon(
+                imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -1029,14 +1066,16 @@ internal fun CachedAppCard(
     onSendToMorphe: () -> Unit,
     onSearchAgain: () -> Unit,
     onRemove: () -> Unit,
+    position: ConnectedPosition = ConnectedPosition.Single,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val usable = remember(entry.uri) { context.isHistoryUriUsable(entry.uri) }
+    var showDetails by rememberSaveable(entry.uri, entry.timestamp) { mutableStateOf(false) }
 
     SurfaceCard(
         modifier = modifier.fillMaxWidth(),
-        cornerRadius = MorpheDefaults.CompactCornerRadius
+        shape = connectedCardShape(position)
     ) {
         Column(
             modifier = Modifier
@@ -1076,40 +1115,87 @@ internal fun CachedAppCard(
                     )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .clickable(onClick = onRemove),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.DeleteOutline,
-                        contentDescription = "Remove from list",
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(topStart = 18.dp, bottomStart = 18.dp, topEnd = 4.dp, bottomEnd = 4.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f))
+                            .clickable(onClick = onRemove),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.DeleteOutline,
+                            contentDescription = "Remove from list",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f))
+                            .clickable(onClick = onSearchAgain),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = "Search again",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 18.dp, bottomEnd = 18.dp))
+                            .background(
+                                if (showDetails) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
+                            )
+                            .semantics { stateDescription = if (showDetails) "Expanded" else "Collapsed" }
+                            .clickable { showDetails = !showDetails },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = if (showDetails) "Hide APK details" else "Show APK details",
+                            modifier = Modifier.size(18.dp),
+                            tint = if (showDetails) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                entry.versionName?.let { ver ->
+            AnimatedVisibility(visible = showDetails) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    entry.versionName?.let { ver ->
+                        MorpheStatusBadge(
+                            text = "v$ver",
+                            tone = SemanticTone.Primary
+                        )
+                    }
                     MorpheStatusBadge(
-                        text = "v$ver",
-                        tone = SemanticTone.Primary
+                        text = entry.sourceName,
+                        tone = SemanticTone.Neutral
+                    )
+                    MorpheStatusBadge(
+                        text = formatHistoryTimestamp(entry.timestamp),
+                        tone = SemanticTone.Neutral
+                    )
+                    MorpheStatusBadge(
+                        text = entry.fileKind.uppercase(java.util.Locale.ROOT),
+                        tone = SemanticTone.Neutral
+                    )
+                    MorpheStatusBadge(
+                        text = entry.packageName,
+                        tone = SemanticTone.Neutral
                     )
                 }
-                MorpheStatusBadge(
-                    text = entry.sourceName,
-                    tone = SemanticTone.Neutral
-                )
-                MorpheStatusBadge(
-                    text = formatHistoryTimestamp(entry.timestamp),
-                    tone = SemanticTone.Neutral
-                )
             }
 
             if (usable) {
@@ -1202,37 +1288,7 @@ internal fun CachedAppCard(
                         )
                     }
                 }
-            } else {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(40.dp),
-                    shape = RoundedCornerShape(50),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                    onClick = onSearchAgain
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Download,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            text = "Search again",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
             }
         }
     }
 }
-

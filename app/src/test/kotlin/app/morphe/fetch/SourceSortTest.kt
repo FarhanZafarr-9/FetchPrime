@@ -35,7 +35,7 @@ class SourceSortTest {
     )
 
     @Test
-    fun sortedForDisplay_placesProviderWithDirectDownloadAtTopWhenOthersHaveNoApks() {
+    fun sortedForDisplay_preservesConfiguredOrderWhenResultsArrive() {
         val request = testRequest(packageName = "in.startv.hotstar")
         val groups = listOf(
             createGroup(DownloadSource.APK_PURE, latestState = ResolveState.Error("No listing found on APKPure")),
@@ -51,10 +51,10 @@ class SourceSortTest {
 
         assertEquals(
             listOf(
-                DownloadSource.APK_MIRROR,
-                DownloadSource.AURORA,
                 DownloadSource.APK_PURE,
-                DownloadSource.UPTODOWN
+                DownloadSource.AURORA,
+                DownloadSource.UPTODOWN,
+                DownloadSource.APK_MIRROR
             ),
             sorted.map { it.source }
         )
@@ -84,7 +84,7 @@ class SourceSortTest {
     }
 
     @Test
-    fun sortedForDisplay_placesLoadingAboveError() {
+    fun sortedForDisplay_preservesConfiguredOrderAcrossLoadingAndError() {
         val request = testRequest(packageName = "com.example.app")
         val groups = listOf(
             createGroup(DownloadSource.APK_PURE, latestState = ResolveState.Error("No listing found")),
@@ -97,17 +97,17 @@ class SourceSortTest {
 
         assertEquals(
             listOf(
-                DownloadSource.APK_MIRROR,
-                DownloadSource.AURORA,
                 DownloadSource.APK_PURE,
-                DownloadSource.UPTODOWN
+                DownloadSource.AURORA,
+                DownloadSource.UPTODOWN,
+                DownloadSource.APK_MIRROR
             ),
             sorted.map { it.source }
         )
     }
 
     @Test
-    fun sortedForDisplay_requestedVersionFallbackToLatestDirectDownload() {
+    fun sortedForDisplay_preservesConfiguredOrderWithRequestedVersionFallback() {
         val request = testRequest(
             packageName = "com.example.app",
             versionName = "2.0.0"
@@ -133,9 +133,9 @@ class SourceSortTest {
 
         assertEquals(
             listOf(
-                DownloadSource.APK_MIRROR,
                 DownloadSource.APK_PURE,
-                DownloadSource.AURORA
+                DownloadSource.AURORA,
+                DownloadSource.APK_MIRROR
             ),
             sorted.map { it.source }
         )

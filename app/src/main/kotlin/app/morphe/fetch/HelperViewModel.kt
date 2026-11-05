@@ -271,6 +271,7 @@ internal class HelperViewModel(application: Application) : AndroidViewModel(appl
             val resolved = withContext(Dispatchers.IO) {
                 resolveSourceSection(activeRequest, source, option)
             }
+            if (request !== activeRequest) return@launch
             logResolveOutcome(source, option, resolved)
 
             updateResolveState(
@@ -318,7 +319,7 @@ internal class HelperViewModel(application: Application) : AndroidViewModel(appl
         state: ResolveState
     ) {
         val activeRequest = request ?: return
-        val current = (uiState as? UiState.Ready)?.result ?: initialCandidateResult(activeRequest)
+        val current = (uiState as? UiState.Ready)?.result ?: return
         uiState = UiState.Ready(current.withResolveState(source, option, state))
     }
 
@@ -460,6 +461,7 @@ internal class HelperViewModel(application: Application) : AndroidViewModel(appl
             val result = withContext(Dispatchers.IO) {
                 runCatching { resolveVersionHistory(activeRequest, source) }
             }
+            if (request !== activeRequest) return@launch
             result
                 .onSuccess { candidates ->
                     appendLog("${source.label} version history loaded: ${candidates.size} versions.")
@@ -475,20 +477,25 @@ internal class HelperViewModel(application: Application) : AndroidViewModel(appl
 
     private fun updateHistoryState(source: DownloadSource, state: VersionHistoryState) {
         val activeRequest = request ?: return
-        val current = (uiState as? UiState.Ready)?.result ?: initialCandidateResult(activeRequest)
+        val current = (uiState as? UiState.Ready)?.result ?: return
         uiState = UiState.Ready(current.withHistoryState(source, state))
     }
+
+    private var resolvingVersion = false
 
     fun downloadVersion(candidate: DownloadCandidate) {
         val activeRequest = request ?: return
         val currentResult = (uiState as? UiState.Ready)?.result
             ?: initialCandidateResult(activeRequest)
         appendLog("Resolving ${candidate.versionDisplay} from ${candidate.source.label} for download...")
-        uiState = UiState.Loading
+        if (resolvingVersion) return
+        resolvingVersion = true
         viewModelScope.launch {
             val resolved = withContext(Dispatchers.IO) {
                 runCatching { resolveHistoryCandidate(activeRequest, candidate) }
             }
+            resolvingVersion = false
+            if (request !== activeRequest || uiState !is UiState.Ready) return@launch
             resolved
                 .onSuccess { direct ->
                     if (direct == null) {
@@ -497,7 +504,7 @@ internal class HelperViewModel(application: Application) : AndroidViewModel(appl
                                 "on ${candidate.source.label}. Open the version page manually."
                         appendLog(message, LogLevel.Warning)
                         uiState = UiState.Ready(
-                            currentResult.markHistoryCandidateNoDirectDownload(
+                            ((uiState as? UiState.Ready)?.result ?: currentResult).markHistoryCandidateNoDirectDownload(
                                 source = candidate.source,
                                 candidateKey = candidate.identityKey()
                             )
@@ -509,7 +516,7 @@ internal class HelperViewModel(application: Application) : AndroidViewModel(appl
                 .onFailure { error ->
                     val message = downloadFailureMessage(candidate, error)
                     appendLog(message, LogLevel.Error)
-                    uiState = UiState.Error(message)
+                    updateHistoryState(candidate.source, VersionHistoryState.Error(message))
                 }
         }
     }
