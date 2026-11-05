@@ -22,8 +22,9 @@ I focused on the settings, browsing, and download screens:
 
 - **Connected rows and cards:** I grouped related options with small gaps and rounded outer corners across settings, app lists, and bundle details.
 - **Filled surfaces:** I replaced many outlines with tonal backgrounds in search fields, dialogs, cards, and controls.
-- **Buttons and actions:** I used pill-shaped buttons and circular controls, keeping download, history, and source-site actions together inside their cards.
-- **Version history and fallback states:** I brought version lists, manual fallback actions, and verification or error notices into the relevant source card. I also adjusted version discovery when a search has no direct match.
+- **Buttons and actions:** I grouped related actions inside their cards, including connected delete, search, and info buttons in download history.
+- **Source browsing:** I kept sources in a stable order while searches finish, reduced selection jumps and loading interruptions, and kept fallback versions in compact inline lists.
+- **Download history:** I made the home history collapsed by default, with tightly spaced connected cards. Each card's info button reveals its version, source, date, file type, and package details.
 - **Settings and updates:** I reorganized the settings rows, added fork information, and made the update dialog display formatted release notes.
 - **Navigation and larger screens:** I adjusted list presentation and the two-pane layout, with fewer visual separators and no visible list scrollbars.
 - **Branding and coexistence:** I added the FetchPrime name and artwork, pointed the updater at my releases, and gave the app its own package so it can sit alongside the original.
@@ -38,7 +39,7 @@ I work on this out of personal interest and in my available time. Keeping the re
 
 I reworked the interface to suit my own preferences; these comparisons are not a critique of the original design. The original project and its contributors retain credit for the downloader and its foundations.
 
-Each pair shows Morphe Fetch on the left and FetchPrime on the right. These are interface comparisons taken at different times; displayed sources, results, counts, and switch states may differ.
+Each pair shows Morphe Fetch on the left and FetchPrime on the right. These are interface comparisons taken at different times; displayed sources, results, counts, and switch states may differ. The screenshots predate the 1.5.5 source and history refinements, so some layouts and controls differ from the current release.
 
 ### Settings
 
@@ -120,9 +121,13 @@ The app details screen and connected patch-description rows.
 
 Starting with FetchPrime **1.5.3**, my application ID is **`app.morphe.fetchprime`**. The original uses `app.morphe.fetch`, so both can be installed together. Download the signed APK from [my releases](https://github.com/FarhanZafarr-9/FetchPrime/releases/latest).
 
-This is a separate installation with its own settings, history, and permissions. FetchPrime 1.5.2 used the original package name; install 1.5.3 separately instead of using that older build's in-app updater, which correctly rejects APKs with a different package name. You can keep the old installation until you have set up the new one.
+This is a separate installation with its own settings, history, and permissions. FetchPrime 1.5.2 used the original package name; install the latest release separately instead of using that older build's in-app updater, which correctly rejects APKs with a different package name. You can keep the old installation until you have set up the new one.
 
 The permanent FetchPrime signing key is unchanged. Future updates to `app.morphe.fetchprime` will use the same key.
+
+To install, download the `.apk` asset from the latest release and open it on Android. Allow installation from the app opening the APK if Android asks. For an existing FetchPrime 1.5.3 or later installation signed with this key, install the latest APK over it or use **Settings → Updates & About**.
+
+To find an APK directly, search by app name or package on the home screen, then choose a source and download option. Open **Downloaded APKs** to view saved history; tap a card's info button to show its metadata.
 
 ---
 
@@ -131,13 +136,13 @@ The permanent FetchPrime signing key is unchanged. Future updates to `app.morphe
 The downloader and its integrations come from the projects this fork builds on. I have kept those capabilities available behind my reworked interface:
 
 - **Multi-Source Parallel Resolution** — Concurrently queries all enabled sources (Google Play via Aurora, APKMirror, APKPure, and Uptodown) to fetch recommended architectures and compatible versions without manual hunting.
-- **Find New Apps (Archive Explorer)** — Built-in catalog of 100+ patchable applications and community repositories. Includes live GitHub catalog sync, offline fallback, favourites bookmarking, and smart installed/patched app status detection.
-- **Download Stream & Archive Integrity** — Validates download streams against server content lengths, verifies ZIP/DEX file integrity before handoff, and extracts signing certificates to protect against corrupt or tampered binaries.
-- **Headless Cloudflare Solver** — Background Turnstile solver, ad-blocking engine, and session keeper for seamless downloads on protected mirrors.
-- **Aurora Store & MicroG-RE Integration** — One-tap anonymous Google Play token acquisition via installed MicroG-RE or verified fallback dispensers for direct Play Store CDN delivery.
-- **Universal Format Support** — Fully parses, verifies, and packages standalone `APK` files as well as split bundles (`APKM`, `APKS`, and `XAPK`).
+- **Find New Apps (Archive Explorer)** — Browse patchable applications and community repositories, with GitHub catalog sync, cached/offline data, favourites, and installed/patched app status.
+- **Download and archive checks** — Checks APK-like download streams and archive contents before handoff. These checks help detect invalid or corrupt files; they do not establish that an APK is safe or authentic.
+- **Protected-source handling** — Attempts background verification for Uptodown and provides an in-app browser when a source needs manual verification. Success depends on the source and device.
+- **Aurora Store & MicroG-RE Integration** — Supports Google Play downloads using MicroG-RE credentials or anonymous token dispensers, with account and dispenser options in Settings.
+- **APK and bundle support** — Handles standalone `APK` files and split bundles (`APKM`, `APKS`, and `XAPK`). Available formats depend on the source and app version.
 - **Morphe Manager Integration** — Automated handoff via Android intents (`ACTION_DOWNLOAD_ORIGINAL_APK`), routing clean stock binaries directly to Morphe Manager's patching pipeline.
-- **Modern Jetpack Compose Architecture** — Material 3 dynamic color, edge-to-edge system bars, pull-to-refresh, adaptive tablet two-pane layout, and responsive navigation.
+- **Modern Jetpack Compose Architecture** — Material 3 dynamic color, edge-to-edge system bars, an adaptive tablet two-pane layout, and responsive navigation.
 
 ---
 
@@ -146,9 +151,9 @@ The downloader and its integrations come from the projects this fork builds on. 
 | Source | Description | Features |
 |---|---|---|
 | **Aurora Store** | Direct Google Play CDN | Anonymous check-in via MicroG-RE, architecture filtering, split-APK delivery |
-| **APKMirror** | Verified community mirror | Architecture variants, release dates, automated session warmer |
-| **APKPure** | Versioned archive API | Fast direct CDN downloads with device-matched ABIs |
-| **Uptodown** | Global software directory | Background Turnstile bypass and direct variant downloads |
+| **APKMirror** | Community APK mirror | Architecture variants, release dates, automated session warmer |
+| **APKPure** | Versioned archive API | Direct CDN downloads with device-matched ABIs |
+| **Uptodown** | Global software directory | Background verification attempts, in-app verification, and variant downloads |
 
 ---
 
